@@ -37,7 +37,7 @@ import Data.List
 -}
 checkGuess :: String -> String -> String
 checkGuess guess answer
-    | guess == answer = take (length guess) (repeat 'T')
+    | guess == answer = replicate (length guess) 'T'
     | length guess /= length answer = error "El tamaño de las cadenas no coincide"
     | otherwise =
         checkV guess resultString remainingChars
