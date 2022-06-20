@@ -2,6 +2,7 @@
 Module      : Example module docs
 Description : Short description
 Copyright   : (c) Christopher Gómez, 2022
+    Nestor Javier, 2022
 License     : GPL-3
 Maintainer  : sample@email.com
 Stability   : experimental
@@ -27,13 +28,18 @@ import Data.List
     una posición distinta.
   - _ donde la letra de la adivinación no se encuentra en la respuesta.
 
-  Por ejemplo:
-    checkGuess "CARAS" "CARPA" = "TTTV_"
-    checkGuess "TIENE" "PEROL" = "--V--"
-    checkGuess "PALTA" "RESTO" = "---T-"
-    checkGuess "PERRO" "PERRO" = "TTTTT"
-    checkGuess "TIENE" "TENER" -> "T-VVV"
-    checkGuess "SIEMPRE" "NUNCA" -> error "El tamaño de las palabras no coincide"
+  Ejemplos:
+    >>> checkGuess "CARAS" "CARPA"
+    "TTTV_"
+    >>>checkGuess "TIENE" "PEROL"
+    "--V--"
+    >>> checkGuess "PALTA" "RESTO"
+    "---T-"
+    >>> checkGuess "PERRO" "PERRO"
+    "TTTTT"
+    >>> checkGuess "TIENE" "TENER"
+    "T-VVV"
+    >>> checkGuess "SIEMPRE" "NUNCA" -> error "El tamaño de las cadenas no coincide"
 -}
 checkGuess :: String -> String -> String
 checkGuess guess answer
@@ -42,18 +48,15 @@ checkGuess guess answer
     | otherwise =
         checkV guess resultString remainingChars
         where
-            (resultString, remainingChars) = checkT guess answer answer
+            (resultString, remainingChars) = checkT guess answer
 
 -- Chequea los toros de la palabra
 -- checkT guess asnwer remainingChars
-checkT :: String -> String -> String -> (String, String)
-checkT "" "" remAns = ("", remAns)
-
-checkT (h1:r1) (h2:r2) ans
-    | h1 == h2  = ("T" ++ remGuess, delete h1 remAns)
-    | otherwise = ("-" ++ remGuess, remAns)
-    where
-        (remGuess, remAns) = checkT r1 r2 ans
+checkT :: String -> String -> (String, String)
+checkT guess answer =
+    let resString = zipWith (\x y -> if x == y then 'T' else '-') guess answer
+        remChars  = filter (/= ' ') $ zipWith (\x y -> if x == y then x else ' ') guess answer
+    in (resString, remChars)
 
 -- Chequea las vacas de la palabra
 -- checkV guess resultString remainingChars
