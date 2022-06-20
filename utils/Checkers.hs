@@ -46,16 +46,16 @@ checkGuess guess answer
     | guess == answer = replicate (length guess) 'T'
     | length guess /= length answer = error "El tamaño de las cadenas no coincide"
     | otherwise =
-        checkV guess resultString remainingChars
+        checkV guess resString remChars
         where
-            (resultString, remainingChars) = checkT guess answer
+            (resString, remChars) = checkT guess answer
 
 -- Chequea los toros de la palabra
 -- checkT guess asnwer remainingChars
 checkT :: String -> String -> (String, String)
 checkT guess answer =
     let resString = zipWith (\x y -> if x == y then 'T' else '-') guess answer
-        remChars  = filter (/= ' ') $ zipWith (\x y -> if x == y then x else ' ') guess answer
+        remChars  = filter (/= ' ') $ zipWith (\x y -> if x == y then ' '  else y) guess answer
     in (resString, remChars)
 
 -- Chequea las vacas de la palabra
