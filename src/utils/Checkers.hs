@@ -54,8 +54,8 @@ checkGuess guess answer
 -- checkT guess asnwer remainingChars
 checkT :: String -> String -> (String, String)
 checkT guess answer =
-    let resString = zipWith (\x y -> if x == y then 'T' else '-') guess answer
-        remChars  = filter (/= ' ') $ zipWith (\x y -> if x == y then ' '  else y) guess answer
+    let temp = zipWith (\x y -> if x == y then "T " else "-" ++ [y]) guess answer
+        [resString, remChars] = transpose temp
     in (resString, remChars)
 
 -- Chequea las vacas de la palabra
@@ -66,3 +66,7 @@ checkV (h1:r1) (h2:r2) remAns
     | h2 == 'T'        = "T" ++ checkV r1 r2 remAns
     | h1 `elem` remAns = "V" ++ checkV r1 r2 (delete h1 remAns)
     | otherwise        = "-" ++ checkV r1 r2 remAns
+
+{-
+
+-}
