@@ -10,7 +10,7 @@ Portability : POSIX
 Here is a longer description of this module, containing some
 commentary with @some markup@.
 -}
-module Checker (
+module Utils.Checkers (
     checkGuess
 ) where
 
