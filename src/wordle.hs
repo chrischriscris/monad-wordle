@@ -46,8 +46,6 @@ loadWords path = do
 -}
 mastermindMode :: Set.Set String -> String -> Int -> IO ()
 mastermindMode words answer lives = do
-    -- Configura el buffering de la salida estándar para que ocurra la
-    -- salida de inmediato
     if lives /= 0
         then do 
             putStr "DESCIFRADOR : "
@@ -73,9 +71,7 @@ mastermindMode words answer lives = do
 getRandomWord :: Set.Set String -> IO (String)
 getRandomWord words = do
     let n = length words
-
     -- Obtiene un generador pseudo-aleatorio del sistema operativo
     gen <- getStdGen
-
     -- Obtiene y retorna una palabra aleatoria
     return $ Set.elemAt (fst $ randomR (0, n-1) gen) words
