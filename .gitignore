@@ -1,3 +1,7 @@
+# Mine
+wordle
+
+# Haskell .gitignore
 dist
 dist-*
 cabal-dev

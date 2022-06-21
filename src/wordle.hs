@@ -6,6 +6,7 @@ import System.Exit
 import Data.List
 import Utils.Checkers
 import qualified Data.Set as Set
+import Data.Either
 
 wordsFile = "./Palabras.txt"
 
@@ -17,10 +18,10 @@ main = do
 
     words <- loadWords wordsFile
     args <- getArgs
-    if (length args /= 1) || (not $ (args !! 0) `elem` modes)
+    if length args /= 1 || head args `notElem` modes
         then die "Uso: wordle [mentemaestra|descifrador]"
     else do
-        if (args !! 0) == "mentemaestra"
+        if head args == "mentemaestra"
             then do
                 randomWord <- getRandomWord words
                 mastermindMode words randomWord 6
@@ -30,8 +31,8 @@ main = do
 
 {-|
   La función `loadWords` carga el archivo de palabras y devuelve una tupla con
-  la lista de palabras y el número de palabras obtenidas.
--} 
+  un Set que contiene la lista de palabras.
+-}
 loadWords :: FilePath -> IO (Set.Set String)
 loadWords path = do
     contents <- readFile path
@@ -46,29 +47,40 @@ loadWords path = do
 -}
 mastermindMode :: Set.Set String -> String -> Int -> IO ()
 mastermindMode words answer lives = do
-    if lives /= 0
-        then do 
-            putStr "DESCIFRADOR : "
-            guess <- getLine
+    if lives /= 0 then do
+        putStrLn $ "Intentos restantes: " ++ show lives
+        -- Obtiene la palabra del jugador y evalúa su respuesta
+        putStr "DESCIFRADOR : "
+        guess <- getLine
+        let eval = checkGuess guess answer words 
 
+        if isLeft eval then do
+            -- Si es error se indica y continúa con los mismo intentos
+            let Left error = eval
+            putStrLn $ "Error: " ++ error ++ "\n"
+            mastermindMode words answer lives
+
+        else do
+            -- Si es válida, imprime la string de calificación
+            let Right score = eval
             putStr "MENTEMAESTRA: "
-            let score = checkGuess guess answer
             putStrLn score
 
-            if score == replicate (length guess) 'T'
-                then do
-                    putStrLn "\n¡Ganaste!"
+            if score == replicate (length guess) 'T' then do
+                -- Si el jugador ha acertado, imprime la palabra y termina
+                putStrLn "\n¡Ganaste!"
             else do
                 putStr "\n"
                 mastermindMode words answer (lives - 1)
     else do
+        -- Si el jugador no tiene más intentos, revela la palabra
         putStrLn $ "La palabra era \"" ++ answer ++ "\""
-        
+
 
 {-|
   La función `getRandomWord` devuelve una String aleatoria de un Set de Strings
 -}
-getRandomWord :: Set.Set String -> IO (String)
+getRandomWord :: Set.Set String -> IO String
 getRandomWord words = do
     let n = length words
     -- Obtiene un generador pseudo-aleatorio del sistema operativo

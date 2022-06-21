@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-|
 Module      : Example module docs
 Description : Short description
@@ -15,52 +16,81 @@ module Utils.Checkers (
     checkGuess
 ) where
 
-import Data.List
+import qualified Data.Set as Set
+import Data.List (zipWith, transpose, delete)
 
 {-|
-  La función 'checkGuess' recibe un String a comprobar y la respuesta correcta,
-  de igual tamaño, y retorna una String con el resultado de la comprobación,
-  con el siguiente formato:
+  String de calificación de una adivinación de Wordle, tiene el siguiente
+  formato:
 
   - T donde la letra de la adivinación se encuentra en la posición 
     correspondiente en la respuesta.
   - V donde la letra de la adivinación se encuentra en la respuesta pero en
     una posición distinta.
   - _ donde la letra de la adivinación no se encuentra en la respuesta.
+-}
+type QualificationString = String
+
+{-|
+  La función 'checkGuess' chequea la validez y califica una adivinación
+  de Wordle.
+
+  Recibe la adivinación, la respuesta y el conjunto de palabras válidas y
+  retorna:
+  
+  - Left mensaje si la adivinación es inválida.
+  - Right calificación si la adivinación es válida.
 
   Ejemplos:
+
     >>> checkGuess "CARAS" "CARPA"
-    "TTTV_"
+    Right "TTTV_"
     >>>checkGuess "TIENE" "PEROL"
-    "--V--"
+    Right "--V--"
     >>> checkGuess "PALTA" "RESTO"
-    "---T-"
+    Right "---T-"
     >>> checkGuess "PERRO" "PERRO"
-    "TTTTT"
+    Right "TTTTT"
     >>> checkGuess "TIENE" "TENER"
-    "T-VVV"
-    >>> checkGuess "SIEMPRE" "NUNCA" -> error "El tamaño de las cadenas no coincide"
+    Right"T-VVV"
+    >>> checkGuess "SIEMPRE" "NUNCA"
+    Left "El tamaño de las cadenas no coincide"
 -}
-checkGuess :: String -> String -> String
-checkGuess guess answer
-    | guess == answer = replicate (length guess) 'T'
-    | length guess /= length answer = error "El tamaño de las cadenas no coincide"
+checkGuess :: String -> String -> Set.Set String 
+    -> Either String QualificationString
+checkGuess guess answer words
+    | guess == answer               = Right $ replicate (length guess) 'T'
+    | length guess /= length answer = Left "El tamaño de la adivinación no coincide"
+    | guess `Set.notMember` words   = Left "La palabra es inválida"
     | otherwise =
-        checkV guess resString remChars
+        Right $ checkV guess resString remChars
         where
             (resString, remChars) = checkT guess answer
 
--- Chequea los toros de la palabra
--- checkT guess asnwer remainingChars
-checkT :: String -> String -> (String, String)
+{-|
+  La función `checkT` chequea los toros de una palabra, dada la adivinación y
+  la respuesta esperada.
+
+  Retorna una tupla con:
+
+  - La string de calificación parcial con el formato descrito en `checkGuess`
+  - Una string con las letras restantes por adivinar.
+-}
+checkT :: String -> String
+    -> (QualificationString, String)
 checkT guess answer =
     let temp = zipWith (\x y -> if x == y then "T " else "-" ++ [y]) guess answer
         [resString, remChars] = transpose temp
-    in (resString, remChars)
+    in (resString, filter (/= ' ') remChars)
 
--- Chequea las vacas de la palabra
--- checkV guess resultString remainingChars
-checkV :: String -> String -> String -> String
+{-|
+  La función `checkV` chequea las vacas de la palabra, dada la adivinación, una
+  string de calificación, y una string con las letras restantes por adivinar.
+
+  Retorna una string de calificación.
+--}
+checkV :: String -> String -> String
+    -> QualificationString
 checkV "" _ _ = ""
 checkV (h1:r1) (h2:r2) remAns
     | h2 == 'T'        = "T" ++ checkV r1 r2 remAns
@@ -70,3 +100,4 @@ checkV (h1:r1) (h2:r2) remAns
 {-
 
 -}
+-- validateGuess :: String -> String -> Set.Set String -> Either String QualificationString
