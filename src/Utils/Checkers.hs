@@ -18,6 +18,7 @@ module Utils.Checkers (
 
 import qualified Data.Set as Set
 import Data.List (zipWith, transpose, delete)
+import Data.Char -- necesaria apra noAccent
 
 {-|
   String de calificación de una adivinación de Wordle, tiene el siguiente
@@ -101,3 +102,85 @@ checkV (h1:r1) (h2:r2) remAns
 
 -}
 -- validateGuess :: String -> String -> Set.Set String -> Either String QualificationString
+
+
+{-|
+    La funcion validWord verifica si una palabra es valida
+    Entrda: palabra a verificar, conjunto con las validas palabras
+    si la palabra no tiene 5 letras retorna false
+    si la palabra tiene algun caracter especial, retorna False
+    si la palabra no pertenece al conjunto, retorna False.
+-}
+validWord :: String -> Set.Set String -> Bool
+validWord guess words
+        | length guess /= 5                         = False
+        | specialChar guess == True                 = False
+        | guess `Set.notMember` words               = False
+        | otherwise                                 = True
+
+{-|
+    Funcion que verifica si una palabra posee caracteres especiales
+-}
+specialChar :: String -> Bool
+specialChar []     = False
+specialChar (x:xs) = if x < '\64' || x > '\90' then True
+                      else specialChar xs
+
+{-|
+    Funcion para convertir cadenas de caracteres a mayusculas
+-}
+strToUpper :: String -> String
+strToUpper xs = map toUpper xs
+
+{-| remover acentos de una cadena de caracteres
+    Ejemplo: 
+    >>> noAccent "Hola, cómo estás."
+    "Hola, como estas."
+-}
+noAccent :: String -> String
+noAccent xs = map noAccentChar xs
+
+noAccentChar :: Char -> Char
+noAccentChar n |  --------------------------------------------- A
+    n == '\xc0'   || n == '\xc1'   || n == '\xc2'   ||
+    n == '\xc3'   || n == '\xc4'   || n == '\xc5'   ||
+    n == '\x0100' || n == '\x0102' || n == '\x0104'    = 'A'
+               |  ----------------------------------------------- a
+    n == '\xe0'   || n == '\xe1'   || n == '\xe2'   ||
+    n == '\xe3'   || n == '\xe4'   || n == '\xe5'   ||
+    n == '\x0101' || n == '\x0103' || n == '\x0105'    = 'a'
+               |  ----------------------------------------------- E
+    n == '\xc8'   || n == '\xc9'   || n == '\xca'   ||
+    n == '\xcb'   || n == '\x0112' || n == '\x0114' ||
+    n == '\x0116' || n == '\x0118' || n == '\x011a'    = 'E'
+               |  ----------------------------------------------- e
+    n == '\xe8'   || n == '\xe9'   || n == '\xea'   ||
+    n == '\xeb'   || n == '\x0113' || n == '\x0115' ||
+    n == '\x0117' || n == '\x0119' || n == '\x011b'    = 'e'
+               |  ----------------------------------------------- I
+    n == '\xcc'   || n == '\xcd'   || n == '\xce'   ||
+    n == '\xcf'   || n == '\x0128' || n == '\x012a' ||
+    n == '\x012c' || n == '\x012e' || n == '\x0130'    = 'I'
+               |  ----------------------------------------------- i
+    n == '\xec'   || n == '\xed'   || n == '\xee'   ||
+    n == '\xef'   || n == '\x0129' || n == '\x012b' ||
+    n == '\x012d' || n == '\x012f' || n == '\x0131'    = 'i'
+               |  ----------------------------------------------- O
+    n == '\xd2'   || n == '\xd3'   || n == '\xd4'   ||
+    n == '\xd5'   || n == '\xd6'   || n == '\xd8'   ||
+    n == '\x014c' || n == '\x014e' || n == '\x0150'    = 'O'
+               |  ----------------------------------------------- o
+    n == '\xf2'   || n == '\xf3'   || n == '\xf4'   ||
+    n == '\xf5'   || n == '\xf6'   || n == '\xf8'   ||
+    n == '\x014d' || n == '\x014f' || n == '\x0151'    = 'o'
+               |  ----------------------------------------------- U
+    n == '\xd9'   || n == '\xda'   || n == '\xdb'   ||
+    n == '\xdc'   || n == '\x0168' || n == '\x016a' ||
+    n == '\x016c' || n == '\x016e' || n == '\x0170' ||
+    n == '\x0172'                                      = 'U'
+               |  ----------------------------------------------- u
+    n == '\xf9'   || n == '\xfa'   || n == '\xfb'   ||
+    n == '\xfc'   || n == '\x0169' || n == '\x016b' ||
+    n == '\x016d' || n == '\x016f' || n == '\x0171' ||
+    n == '\x0173'                                      = 'u'
+               | otherwise = n
