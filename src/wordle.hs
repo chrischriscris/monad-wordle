@@ -66,7 +66,7 @@ mastermindMode words answer lives = do
             putStr "MENTEMAESTRA: "
             putStrLn score
 
-            if score == replicate (length guess) 'T' then do
+            if score == "TTTTT" then do
                 -- Si el jugador ha acertado, imprime la palabra y termina
                 putStrLn "\n¡Ganaste!"
             else do

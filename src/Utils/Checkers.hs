@@ -57,10 +57,10 @@ type QualificationString = String
     >>> checkGuess "SIEMPRE" "NUNCA"
     Left "El tamaño de las cadenas no coincide"
 -}
-checkGuess :: String -> String -> Set.Set String 
+checkGuess :: String -> String -> Set.Set String
     -> Either String QualificationString
 checkGuess guess answer words
-    | guess == answer               = Right $ replicate (length guess) 'T'
+    | guess == answer               = Right "TTTTT"
     | length guess /= length answer = Left "El tamaño de la adivinación no coincide"
     | guess `Set.notMember` words   = Left "La palabra es inválida"
     | otherwise =
@@ -89,7 +89,7 @@ checkT guess answer =
   string de calificación, y una string con las letras restantes por adivinar.
 
   Retorna una string de calificación.
---}
+-}
 checkV :: String -> String -> String
     -> QualificationString
 checkV "" _ _ = ""
@@ -98,50 +98,41 @@ checkV (h1:r1) (h2:r2) remAns
     | h1 `elem` remAns = "V" ++ checkV r1 r2 (delete h1 remAns)
     | otherwise        = "-" ++ checkV r1 r2 remAns
 
-{-
-
--}
--- validateGuess :: String -> String -> Set.Set String -> Either String QualificationString
-
 
 {-|
-    La funcion validWord verifica si una palabra es valida
-    Entrda: palabra a verificar, conjunto con las validas palabras
-    si la palabra no tiene 5 letras retorna false
-    si la palabra tiene algun caracter especial, retorna False
-    si la palabra no pertenece al conjunto, retorna False.
+    La funcion `validateGuess` verifica si una palabra es valida 
+    Entrada: palabra a verificar, conjunto con las validas palabras
+    Si la palabra no tiene 5 letras retorna false
+    Si la palabra tiene algun caracter especial, retorna False
+    Si la palabra no pertenece al conjunto, retorna False.
 -}
-validWord :: String -> Set.Set String -> Bool
-validWord guess words
-        | length guess /= 5                         = False
-        | specialChar guess == True                 = False
-        | guess `Set.notMember` words               = False
-        | otherwise                                 = True
+validateGuess :: String -> Set.Set String -> Either String String
+validateGuess guess words
+    | length guess /= 5           = Left "La palabra no tiene 5 letras"
+    | isSpecialChar guess         = Left "La palabra tiene caracteres especiales"
+    | guess `Set.notMember` words = Left "La palabra no es válida"
+    | otherwise                   = Right $ removeAccents (map toUpper guess)
 
 {-|
     Funcion que verifica si una palabra posee caracteres especiales
 -}
-specialChar :: String -> Bool
-specialChar []     = False
-specialChar (x:xs) = if x < '\64' || x > '\90' then True
-                      else specialChar xs
+isSpecialChar :: String -> Bool
+isSpecialChar = let f = (\x -> (||) (x < '\64' || x > '\90'))
+    in foldr f False
 
 {-|
-    Funcion para convertir cadenas de caracteres a mayusculas
--}
-strToUpper :: String -> String
-strToUpper xs = map toUpper xs
+  La función `removeAccents` remueve los acentos de una String.
 
-{-| remover acentos de una cadena de caracteres
-    Ejemplo: 
-    >>> noAccent "Hola, cómo estás."
-    "Hola, como estas."
--}
-noAccent :: String -> String
-noAccent xs = map noAccentChar xs
+  Ejemplo:
 
-noAccentChar :: Char -> Char
-noAccentChar n |  --------------------------------------------- A
+  >>> noAccent "Hola, cómo estás."
+  "Hola, como estas."
+-}
+removeAccents :: String -> String
+removeAccents = map removeAccentChar
+
+removeAccentChar :: Char -> Char
+removeAccentChar n |  --------------------------------------------- A
     n == '\xc0'   || n == '\xc1'   || n == '\xc2'   ||
     n == '\xc3'   || n == '\xc4'   || n == '\xc5'   ||
     n == '\x0100' || n == '\x0102' || n == '\x0104'    = 'A'
