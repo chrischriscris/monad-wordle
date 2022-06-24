@@ -111,13 +111,13 @@ validateGuess guess words
     | length guess /= 5           = Left "La palabra no tiene 5 letras"
     | isSpecialChar guess         = Left "La palabra tiene caracteres especiales"
     | guess `Set.notMember` words = Left "La palabra no es válida"
-    | otherwise                   = Right $ removeAccents (map toUpper guess)
+    | otherwise                   = Right $ removeAccents
 
 {-|
     Funcion que verifica si una palabra posee caracteres especiales
 -}
 isSpecialChar :: String -> Bool
-isSpecialChar = let f = (\x -> (||) (x < '\64' || x > '\90'))
+isSpecialChar = let f = (\x -> (||) (not (isAlpha x) || x == '\241'))
     in foldr f False
 
 {-|
@@ -129,49 +129,17 @@ isSpecialChar = let f = (\x -> (||) (x < '\64' || x > '\90'))
   "Hola, como estas."
 -}
 removeAccents :: String -> String
-removeAccents = map removeAccentChar
+removeAccents = map (noAccentChar . toUpper) xs
 
-removeAccentChar :: Char -> Char
-removeAccentChar n |  --------------------------------------------- A
-    n == '\xc0'   || n == '\xc1'   || n == '\xc2'   ||
-    n == '\xc3'   || n == '\xc4'   || n == '\xc5'   ||
-    n == '\x0100' || n == '\x0102' || n == '\x0104'    = 'A'
-               |  ----------------------------------------------- a
-    n == '\xe0'   || n == '\xe1'   || n == '\xe2'   ||
-    n == '\xe3'   || n == '\xe4'   || n == '\xe5'   ||
-    n == '\x0101' || n == '\x0103' || n == '\x0105'    = 'a'
-               |  ----------------------------------------------- E
-    n == '\xc8'   || n == '\xc9'   || n == '\xca'   ||
-    n == '\xcb'   || n == '\x0112' || n == '\x0114' ||
-    n == '\x0116' || n == '\x0118' || n == '\x011a'    = 'E'
-               |  ----------------------------------------------- e
-    n == '\xe8'   || n == '\xe9'   || n == '\xea'   ||
-    n == '\xeb'   || n == '\x0113' || n == '\x0115' ||
-    n == '\x0117' || n == '\x0119' || n == '\x011b'    = 'e'
-               |  ----------------------------------------------- I
-    n == '\xcc'   || n == '\xcd'   || n == '\xce'   ||
-    n == '\xcf'   || n == '\x0128' || n == '\x012a' ||
-    n == '\x012c' || n == '\x012e' || n == '\x0130'    = 'I'
-               |  ----------------------------------------------- i
-    n == '\xec'   || n == '\xed'   || n == '\xee'   ||
-    n == '\xef'   || n == '\x0129' || n == '\x012b' ||
-    n == '\x012d' || n == '\x012f' || n == '\x0131'    = 'i'
-               |  ----------------------------------------------- O
-    n == '\xd2'   || n == '\xd3'   || n == '\xd4'   ||
-    n == '\xd5'   || n == '\xd6'   || n == '\xd8'   ||
-    n == '\x014c' || n == '\x014e' || n == '\x0150'    = 'O'
-               |  ----------------------------------------------- o
-    n == '\xf2'   || n == '\xf3'   || n == '\xf4'   ||
-    n == '\xf5'   || n == '\xf6'   || n == '\xf8'   ||
-    n == '\x014d' || n == '\x014f' || n == '\x0151'    = 'o'
-               |  ----------------------------------------------- U
-    n == '\xd9'   || n == '\xda'   || n == '\xdb'   ||
-    n == '\xdc'   || n == '\x0168' || n == '\x016a' ||
-    n == '\x016c' || n == '\x016e' || n == '\x0170' ||
-    n == '\x0172'                                      = 'U'
-               |  ----------------------------------------------- u
-    n == '\xf9'   || n == '\xfa'   || n == '\xfb'   ||
-    n == '\xfc'   || n == '\x0169' || n == '\x016b' ||
-    n == '\x016d' || n == '\x016f' || n == '\x0171' ||
-    n == '\x0173'                                      = 'u'
+noAccentChar :: Char -> Char
+noAccentChar n |  ------ A
+    n == 'Á' = 'A'
+               |  ------ E
+    n == 'É' = 'E'
+               |  ------ I
+    n == 'Í' = 'I'
+               |  ------ O
+    n == 'Ó' = 'O'
+               |  ------ U
+    n == 'Ú' = 'U'
                | otherwise = n
