@@ -129,10 +129,10 @@ isSpecialChar = let f = (\x -> (||) (not (isAlpha x) || x == '\241'))
   "Hola, como estas."
 -}
 removeAccents :: String -> String
-removeAccents = map (noAccentChar . toUpper) xs
+removeAccents = map (removeAccentsChar . toUpper) xs
 
-noAccentChar :: Char -> Char
-noAccentChar n |  ------ A
+removeAccentsChar :: Char -> Char
+removeAccentsChar n |  ------ A
     n == 'Á' = 'A'
                |  ------ E
     n == 'É' = 'E'
