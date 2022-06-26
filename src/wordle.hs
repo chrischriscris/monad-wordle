@@ -5,7 +5,7 @@ import System.Random
 import System.Exit
 import Data.List
 import Utils.Checkers
-import qualified Data.Set as Set
+import Data.Set ( Set, elemAt, fromDistinctAscList )
 import Data.Either
 
 wordsFile = "./Palabras.txt"
@@ -24,29 +24,28 @@ main = do
         if head args == "mentemaestra"
             then do
                 randomWord <- getRandomWord words
-                mastermindMode words randomWord 6
+                mastermindMode words randomWord 6 []
         else do
             -- decoderMode
             putStrLn "TODO"
 
-{-|
-  La función `loadWords` carga el archivo de palabras y devuelve una tupla con
-  un Set que contiene la lista de palabras.
--}
-loadWords :: FilePath -> IO (Set.Set String)
+-- | Carga el archivo de palabras en un Set.
+loadWords :: FilePath -> IO (Set String)
 loadWords path = do
     contents <- readFile path
-    let words = Set.fromDistinctAscList $ lines contents
+    let words = fromDistinctAscList $ lines contents
     return words
 
-{-|
-  La función `mastermindMode` ejecuta el modo mentemaestra del juego.
-
-  Recibe el conjunto de palabras del juego, el número de intentos que el
-  jugador tendrás para adivinar la palabra al azar escogida.
--}
-mastermindMode :: Set.Set String -> String -> Int -> IO ()
-mastermindMode words answer lives = do
+-- | Ejecuta el modo mentemaestra del juego.
+--
+-- Argumentos:
+--
+-- * El conjunto de palabras del juego.
+-- * La palabra a adivinar.
+-- * El número de intentos restantes.
+-- * Lista de Strings con las calificaciones parciales.
+mastermindMode :: Set String -> String -> Int -> [String] -> IO ()
+mastermindMode words answer lives history = do
     if lives /= 0 then do
         putStrLn $ "Intentos restantes: " ++ show lives
         -- Obtiene la palabra del jugador y evalúa su respuesta
@@ -58,7 +57,7 @@ mastermindMode words answer lives = do
             -- Si es error se indica y continúa con los mismo intentos
             let Left error = eval
             putStrLn $ "Error: " ++ error ++ "\n"
-            mastermindMode words answer lives
+            mastermindMode words answer lives history
 
         else do
             -- Si es válida, imprime la string de calificación
@@ -68,22 +67,30 @@ mastermindMode words answer lives = do
 
             if score == "TTTTT" then do
                 -- Si el jugador ha acertado, imprime la palabra y termina
-                putStrLn "\n¡Ganaste!"
+                putStrLn "\n¡Ganaste!\n"
+                printHistory (score:history)
             else do
                 putStr "\n"
-                mastermindMode words answer (lives - 1)
+                mastermindMode words answer (lives - 1) (score:history)
     else do
         -- Si el jugador no tiene más intentos, revela la palabra
         putStrLn $ "La palabra era \"" ++ answer ++ "\""
 
 
-{-|
-  La función `getRandomWord` devuelve una String aleatoria de un Set de Strings
--}
-getRandomWord :: Set.Set String -> IO String
+-- | Retorna una String aleatoria de un Set de Strings.
+getRandomWord :: Set String -> IO String
 getRandomWord words = do
     let n = length words
     -- Obtiene un generador pseudo-aleatorio del sistema operativo
     gen <- getStdGen
     -- Obtiene y retorna una palabra aleatoria
-    return $ Set.elemAt (fst $ randomR (0, n-1) gen) words
+    return $ elemAt (fst $ randomR (0, n-1) gen) words
+
+-- | Imprime por salida estándar el historial de una partida de Wordle.
+printHistory :: [String] -> IO ()
+printHistory history = do
+    putStrLn "Comparte tu resultado:"
+    mapM_ putStrLn $ reverse history
+
+-- | Ejecuta el modo descifrador del juego.
+-- decoderMode :: a

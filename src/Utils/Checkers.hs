@@ -59,10 +59,11 @@ type Answer = String
 checkGuess :: Guess -> Answer -> Set String
     -> Either String QualificationString
 checkGuess guess answer words
-    | guess == answer  = Right "TTTTT"
     | isLeft res       = res -- Propaga el error
     | otherwise        =
-        let Right word = res in Right $ checkV word (checkT word answer)
+        let Right word = res in
+            if word == answer then Right "TTTTT"
+            else Right $ checkV word (checkT word answer)
     where
         res = validateGuess guess words
 
