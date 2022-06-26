@@ -1,145 +1,142 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-|
-Module      : Example module docs
-Description : Short description
+Módulo      : Utils.Checker
+Descripción : Implementación de cheques para implementación de Wordle
+    en Haskell.
 Copyright   : (c) Christopher Gómez, 2022
     Nestor Javier, 2022
-License     : GPL-3
-Maintainer  : sample@email.com
-Stability   : experimental
-Portability : POSIX
-
-Here is a longer description of this module, containing some
-commentary with @some markup@.
+Licencia    : GPL-3
 -}
 module Utils.Checkers (
     checkGuess
 ) where
 
-import qualified Data.Set as Set
-import Data.List (zipWith, transpose, delete)
-import Data.Char -- necesaria apra noAccent
+import Data.Set ( Set, notMember )
+import Data.List ( zipWith, transpose, delete )
+import Data.Char ( isAlpha, toUpper )
+import Data.Either ( isLeft, fromRight )
 
-{-|
-  String de calificación de una adivinación de Wordle, tiene el siguiente
-  formato:
 
-  - T donde la letra de la adivinación se encuentra en la posición 
-    correspondiente en la respuesta.
-  - V donde la letra de la adivinación se encuentra en la respuesta pero en
-    una posición distinta.
-  - _ donde la letra de la adivinación no se encuentra en la respuesta.
--}
+-- ========== ALIAS DE TIPOS PARA DOCUMENTACIÓN ==========
+
+-- | String de calificación de una adivinación de Wordle, tiene el siguiente
+-- formato:
+--
+-- * T donde la letra de la adivinación se encuentra en la posición 
+--   correspondiente en la respuesta.
+-- * V donde la letra de la adivinación se encuentra en la respuesta pero en
+--   una posición distinta.
+-- * _ donde la letra de la adivinación no se encuentra en la respuesta.
 type QualificationString = String
+type Guess = String
+type Answer = String
 
-{-|
-  La función 'checkGuess' chequea la validez y califica una adivinación
-  de Wordle.
 
-  Recibe la adivinación, la respuesta y el conjunto de palabras válidas y
-  retorna:
-  
-  - Left mensaje si la adivinación es inválida.
-  - Right calificación si la adivinación es válida.
+-- ========== INTERFAZ EXTERNA DEL MÓDULO ==========
 
-  Ejemplos:
-
-    >>> checkGuess "CARAS" "CARPA"
-    Right "TTTV_"
-    >>>checkGuess "TIENE" "PEROL"
-    Right "--V--"
-    >>> checkGuess "PALTA" "RESTO"
-    Right "---T-"
-    >>> checkGuess "PERRO" "PERRO"
-    Right "TTTTT"
-    >>> checkGuess "TIENE" "TENER"
-    Right"T-VVV"
-    >>> checkGuess "SIEMPRE" "NUNCA"
-    Left "El tamaño de las cadenas no coincide"
--}
-checkGuess :: String -> String -> Set.Set String
+-- | Chequea la validez y califica una adivinación de Wordle.
+--
+-- Recibe la adivinación, la respuesta y el Set de palabras válidas y
+-- retorna:
+--
+-- * Left mensaje si la adivinación es inválida.
+-- * Right calificación si la adivinación es válida.
+--
+-- Ejemplos:
+--
+-- >>> checkGuess "CARAS" "CARPA"
+-- Right "TTTV_"
+-- >>>checkGuess "TIENE" "PEROL"
+-- Right "--V--"
+-- >>> checkGuess "PALTA" "RESTO"
+-- Right "---T-"
+-- >>> checkGuess "PERRO" "PERRO"
+-- Right "TTTTT"
+-- >>> checkGuess "TIENE" "TENER"
+-- Right"T-VVV"
+-- >>> checkGuess "SIEMPRE" "NUNCA"
+-- Left "El tamaño de las cadenas no coincide"
+checkGuess :: Guess -> Answer -> Set String
     -> Either String QualificationString
 checkGuess guess answer words
-    | guess == answer               = Right "TTTTT"
-    | length guess /= length answer = Left "El tamaño de la adivinación no coincide"
-    | guess `Set.notMember` words   = Left "La palabra es inválida"
-    | otherwise =
-        Right $ checkV guess resString remChars
-        where
-            (resString, remChars) = checkT guess answer
+    | guess == answer  = Right "TTTTT"
+    | isLeft res       = res -- Propaga el error
+    | otherwise        =
+        let Right word = res in Right $ checkV word (checkT word answer)
+    where
+        res = validateGuess guess words
 
-{-|
-  La función `checkT` chequea los toros de una palabra, dada la adivinación y
-  la respuesta esperada.
 
-  Retorna una tupla con:
+-- ========== FUNCIONES DE CHEQUEO ==========
 
-  - La string de calificación parcial con el formato descrito en `checkGuess`
-  - Una string con las letras restantes por adivinar.
--}
-checkT :: String -> String
+-- | Chequea los toros de una palabra, dada la adivinación y la respuesta
+-- esperada.
+--
+-- Retorna una tupla con:
+--
+-- * Una string con las letras restantes por adivinar.
+-- * La string de calificación parcial con el formato descrito en `checkGuess`
+checkT :: Guess -> Answer
     -> (QualificationString, String)
 checkT guess answer =
-    let temp = zipWith (\x y -> if x == y then "T " else "-" ++ [y]) guess answer
+    let temp = zipWith (\x y -> if x == y then "T" else "-" ++ [y]) guess answer
         [resString, remChars] = transpose temp
-    in (resString, filter (/= ' ') remChars)
+    in (resString, remChars)
 
-{-|
-  La función `checkV` chequea las vacas de la palabra, dada la adivinación, una
-  string de calificación, y una string con las letras restantes por adivinar.
-
-  Retorna una string de calificación.
--}
-checkV :: String -> String -> String
+-- | Chequea las vacas de la palabra, dado el resultado de haber
+-- chequeado los toros con la función `checkT` previamente.
+-- 
+-- Retorna una string de calificación.
+checkV :: Guess -> (QualificationString, String)
     -> QualificationString
-checkV "" _ _ = ""
-checkV (h1:r1) (h2:r2) remAns
-    | h2 == 'T'        = "T" ++ checkV r1 r2 remAns
-    | h1 `elem` remAns = "V" ++ checkV r1 r2 (delete h1 remAns)
-    | otherwise        = "-" ++ checkV r1 r2 remAns
+checkV "" _ = ""
+checkV (h1:r1) (h2:r2, remAns)
+    | h1 `elem` remAns = "V" ++ checkV r1 (r2, delete h1 remAns)
+    | otherwise        = (if h2 == 'T' then "T" else "-") ++ checkV r1 (r2, remAns)
 
 
-{-|
-    La funcion `validateGuess` verifica si una palabra es valida 
-    Entrada: palabra a verificar, conjunto con las validas palabras
-    Si la palabra no tiene 5 letras retorna false
-    Si la palabra tiene algun caracter especial, retorna False
-    Si la palabra no pertenece al conjunto, retorna False.
--}
-validateGuess :: String -> Set.Set String -> Either String String
+-- ========== FUNCIONES DE VALIDACIÓN ==========
+
+-- | Verifica si una palabra es valida, dadas la palabra y un Set con
+-- las palabras válidas.
+-- 
+-- Retorna:
+--
+-- * Left mensaje si la palabra no es válida, con el mensaje de error.
+-- * Right palabra si la palabra es válida, con la palabra en mayúsculas
+-- y sin acentos.
+-- 
+-- Una palabra es válida si:
+--
+-- * Pertenece al conjunto de palabras válidas.
+-- * Todos sus caracteres son alfabéticos
+-- * Tiene 5 caracteres.
+validateGuess :: Guess -> Set String -> Either String Guess
 validateGuess guess words
-    | length guess /= 5           = Left "La palabra no tiene 5 letras"
-    | isSpecialChar guess         = Left "La palabra tiene caracteres especiales"
-    | guess `Set.notMember` words = Left "La palabra no es válida"
-    | otherwise                   = Right $ removeAccents
+    | length guess /= 5         = Left "La palabra no tiene 5 letras"
+    | not $ isAlphabetic guess  = Left "La palabra tiene caracteres especiales"
+    | word `notMember` words    = Left "La palabra no es válida"
+    | otherwise                 = Right word
+    where
+        word = uniformize guess
 
-{-|
-    Funcion que verifica si una palabra posee caracteres especiales
--}
-isSpecialChar :: String -> Bool
-isSpecialChar = let f = (\x -> (||) (not (isAlpha x) || x == '\241'))
-    in foldr f False
+-- | Verifica si una String es alfabética.
+isAlphabetic :: String -> Bool
+isAlphabetic = all isAlpha
 
-{-|
-  La función `removeAccents` remueve los acentos de una String.
-
-  Ejemplo:
-
-  >>> noAccent "Hola, cómo estás."
-  "Hola, como estas."
--}
-removeAccents :: String -> String
-removeAccents = map (removeAccentsChar . toUpper) xs
-
-removeAccentsChar :: Char -> Char
-removeAccentsChar n |  ------ A
-    n == 'Á' = 'A'
-               |  ------ E
-    n == 'É' = 'E'
-               |  ------ I
-    n == 'Í' = 'I'
-               |  ------ O
-    n == 'Ó' = 'O'
-               |  ------ U
-    n == 'Ú' = 'U'
-               | otherwise = n
+-- | Convierte una String a mayúsculas y remueve los acentos agudos de
+-- sus vocales.
+-- 
+-- Ejemplo:
+-- 
+-- >>> uniformize "Hola, cómo estás."
+-- "HOLA, COMO ESTAS."
+uniformize :: String -> String
+uniformize = map (removeAccent . toUpper)
+    where
+        removeAccent 'Á' = 'A'
+        removeAccent 'É' = 'E'
+        removeAccent 'Í' = 'I'
+        removeAccent 'Ó' = 'O'
+        removeAccent 'Ú' = 'U'
+        removeAccent  c  =  c
