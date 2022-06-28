@@ -92,8 +92,8 @@ checkV :: Guess -> (QualificationString, String)
     -> QualificationString
 checkV "" _ = []
 checkV (h1:r1) (h2:r2, remAns)
-    | h1 `elem` remAns = 'V':(checkV r1 (r2, delete h1 remAns))
-    | otherwise        = (if h2 == 'T' then 'T' else '-'):(checkV r1 (r2, remAns))
+    | h1 `elem` remAns = 'V' : checkV r1 (r2, delete h1 remAns)
+    | otherwise        = (if h2 == 'T' then 'T' else '-') : checkV r1 (r2, remAns)
 
 -- ========== FUNCIONES DE VALIDACIÓN ==========
 

@@ -4,9 +4,10 @@ import System.IO
 import System.Random
 import System.Exit
 import Data.List
-import Utils.Checkers
 import Data.Set ( Set, elemAt, fromDistinctAscList )
 import Data.Either
+import Utils.Checkers
+import Utils.Minimaxer
 
 wordsFile = "./Palabras.txt"
 

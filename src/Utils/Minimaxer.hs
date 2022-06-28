@@ -9,13 +9,15 @@ Licencia    : GPL-3
 -}
 module Utils.Minimaxer where
 
-import Data.Set ( Set, notMember )
-import Data.List ( zipWith, transpose, delete )
+import qualified Data.Set as Set
+import Data.List ( foldl' )
 import Data.Char ( isAlpha, toUpper )
 import Data.Either ( isLeft, fromRight )
 
+qualifiedSet = Set.map (\word -> (qualifyWord word, word))
+
 qualifyWord :: String -> Int
-qualifyWord word = foldl' (+)
+qualifyWord word = sum $ map qualifyChar word
 
 qualifyChar :: Char -> Int
 qualifyChar c
