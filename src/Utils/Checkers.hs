@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-|
 Módulo      : Utils.Checker
-Descripción : Implementación de cheques para implementación de Wordle
+Descripción : Chequeos para implementación de Wordle
     en Haskell.
 Copyright   : (c) Christopher Gómez, 2022
     Nestor Javier, 2022
@@ -26,7 +26,7 @@ import Data.Either ( isLeft, fromRight )
 --   correspondiente en la respuesta.
 -- * V donde la letra de la adivinación se encuentra en la respuesta pero en
 --   una posición distinta.
--- * _ donde la letra de la adivinación no se encuentra en la respuesta.
+-- * - donde la letra de la adivinación no se encuentra en la respuesta.
 type QualificationString = String
 type Guess = String
 type Answer = String
@@ -63,7 +63,7 @@ checkGuess guess answer words
     | otherwise        =
         let Right word = res in
             if word == answer then Right "TTTTT"
-            else Right $ checkV word (checkT word answer)
+            else Right $ checkV word $ checkT word answer
     where
         res = validateGuess guess words
 
@@ -90,12 +90,10 @@ checkT guess answer =
 -- Retorna una string de calificación.
 checkV :: Guess -> (QualificationString, String)
     -> QualificationString
-checkV "" _ = ""
+checkV "" _ = []
 checkV (h1:r1) (h2:r2, remAns)
-    | h1 `elem` remAns = "V" ++ checkV r1 (r2, delete h1 remAns)
-    | otherwise        = (if h2 == 'T' then "T" else "-") ++ checkV r1 (r2, remAns)
--- ^^^^ NOTA, tratar de hacerlo recursivo sin usar el ++ sino :
-
+    | h1 `elem` remAns = 'V':(checkV r1 (r2, delete h1 remAns))
+    | otherwise        = (if h2 == 'T' then 'T' else '-'):(checkV r1 (r2, remAns))
 
 -- ========== FUNCIONES DE VALIDACIÓN ==========
 
@@ -110,9 +108,9 @@ checkV (h1:r1) (h2:r2, remAns)
 -- 
 -- Una palabra es válida si:
 --
--- * Pertenece al conjunto de palabras válidas.
--- * Todos sus caracteres son alfabéticos
 -- * Tiene 5 caracteres.
+-- * Todos sus caracteres son alfabéticos
+-- * Pertenece al conjunto de palabras válidas.
 validateGuess :: Guess -> Set String -> Either String Guess
 validateGuess guess words
     | length guess /= 5         = Left "La palabra no tiene 5 letras"
