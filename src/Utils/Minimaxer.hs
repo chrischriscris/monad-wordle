@@ -32,30 +32,6 @@ data Score = Score String Int
 instance Ord Score where
     compare (Score w1 s1) (Score w2 s2) = compare (s2, w2) (s1, w1)
 
--- =============== DEFINICIONES DE CONJUNTOS ==========================
-
--- | Crea el conjunto inicial con todas las Guess del juego, dadas estas
--- en un conjunto de String.
-minimaxWords :: Set String -> Set Guess
-minimaxWords = Set.map guessFromString
-
--- | Conjunto con todas las combinaciones de Scores posibles.
-scoreCombinations :: Set Score
-scoreCombinations = Set.fromList [ scoreFromString str | str <- scoreStrings ]
-    where
-        x = "-VT"
-        scoreStrings = [[a, b, c, d, e] | a<-x, b<-x, c<-x, d<-x, e<-x]
-
--- data Minimaxer = Minimaxer {
---     alphabet :: Set Char,
---     wordlist :: [String],
---     maxDepth :: Int,
---     maxScore :: Int,
---     minScore :: Int,
---     maxGuess :: Guess,
---     minGuess :: Guess
--- }
-
 -- =========== FUNCIONES PARA MANEJAR TIPOS DE DATOS ===========
 
 -- | Retorna un Guess dada una palabra del conjunto de palabras, puntuada
@@ -86,7 +62,48 @@ scoreFromString string = Score string (sum $ map qualifyChar string)
           qualifyChar '-'  = 2
           qualifyChar  c   = error "Caracter inválido" -- Nunca debería ocurrir
 
--- =========== FUNCIONES MISCELÁNEAS / HELPERS ===========
+-- =============== DEFINICIONES DE CONJUNTOS ==========================
+
+-- | Crea el conjunto inicial con todas las Guess del juego, dadas estas
+-- en un conjunto de String.
+minimaxWords :: Set String -> Set Guess
+minimaxWords = Set.map guessFromString
+
+-- | Conjunto con todas las combinaciones de Scores posibles.
+scoreCombinations :: Set Score
+scoreCombinations = Set.fromList [ scoreFromString str | str <- scoreStrings ]
+    where
+        x = "-VT"
+        scoreStrings = [[a, b, c, d, e] | a<-x, b<-x, c<-x, d<-x, e<-x]
+
+-- data Minimaxer = Minimaxer {
+--     alphabet :: Set Char,
+--     wordlist :: [String],
+--     maxDepth :: Int,
+--     maxScore :: Int,
+--     minScore :: Int,
+--     maxGuess :: Guess,
+--     minGuess :: Guess
+-- }
+
+-- =========== FILTRADO DEL CONJUNTO DE PALABRAS ===========
+
+-- | Filtra el conjunto de palabras según las Strings dadas.
+--
+-- Recibe el conjunto inicial, la palabra adivinada y la puntuación.
+filterGuessSet :: Set Guess -> String -> String -> Set Guess
+filterGuessSet words guess score =
+    let fils = getFilters guess score
+        f = unifyFilters fils
+    in
+        Set.filter (\(Guess str _) -> f str) words
+
+-- | Dada una lista de funciones que reciben String y retornan booleano, y
+-- una string, aplica todas las funciones de la lista a la string y retorna
+-- un único booleano (fold fashion)
+unifyFilters :: [String -> Bool] -> String -> Bool
+unifyFilters [] _       = True
+unifyFilters (f:fs) str = f str && unifyFilters fs str
 
 -- | Recibe un Guess y un Score del usuario y retorna una lista de filtros
 -- que servirá para filtrar del conjunto las palabras inválidas
@@ -125,17 +142,17 @@ frequency zipList = toList $
 count :: Char -> String -> Int
 count c = length . filter (==c)
 
--- | Dada una lista de funciones que reciben String y retornan booleano, y
--- una string, aplica todas las funciones de la lista a la string y retorna
--- un único booleano (fold fashion)
-unifyFilter :: [String -> Bool] -> String -> Bool
-unifyFilter [] _       = True
-unifyFilter (f:fs) str = f str && unifyFilter fs str
+-- =========== FILTRADO DEL CONJUNTO DE SCORES ===========
 
--- | Filtra el conjunto de palabras según el Score dado.
-filterSet :: Set Guess -> String -> String -> Set Guess
-filterSet words guess score =
-    let fils = getFilters guess score
-        f = unifyFilter fils
+filterScoreSet :: Set Score -> String -> Set Score
+filterScoreSet scores str =
+    let f = unifyFilters $ posFilters' str 0
     in
-        Set.filter (\(Guess str _) -> f str) words
+        Set.filter (\(Score sc _) -> f sc) scores
+
+-- | Función auxiliar que genera filtros posicionales.
+posFilters' :: String -> Int -> [String -> Bool]
+posFilters' "" _ = []
+posFilters' (c:cs) i
+    | c == 'T' = (\str -> str !! i == c) : posFilters' cs (i+1)
+    | otherwise = posFilters' cs (i+1)
