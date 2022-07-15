@@ -9,10 +9,12 @@ Licencia    : GPL-3
 -}
 module Utils.Minimaxer where
 
+import Data.Set ( Set )
 import qualified Data.Set as Set
 import Data.List ( foldl' )
 import Data.Char ( isAlpha, toUpper )
 import Data.Either ( isLeft, fromRight )
+import Data.Map ( fromListWith, toList )
 
 -- ============== DEFINICIONES DE TIPOS DE DATOS ==============
 
@@ -34,19 +36,18 @@ instance Ord Score where
 
 -- | Crea el conjunto inicial con todas las Guess del juego, dadas estas
 -- en un conjunto de String.
-minimaxWords :: Set.Set String -> Set.Set Guess
+minimaxWords :: Set String -> Set Guess
 minimaxWords = Set.map guessFromString
 
 -- | Conjunto con todas las combinaciones de Scores posibles.
-scoreCombinations :: Set.Set Score
+scoreCombinations :: Set Score
 scoreCombinations = Set.fromList [ scoreFromString str | str <- scoreStrings ]
     where
         x = "-VT"
         scoreStrings = [[a, b, c, d, e] | a<-x, b<-x, c<-x, d<-x, e<-x]
 
-
 -- data Minimaxer = Minimaxer {
---     alphabet :: Set.Set Char,
+--     alphabet :: Set Char,
 --     wordlist :: [String],
 --     maxDepth :: Int,
 --     maxScore :: Int,
@@ -54,9 +55,6 @@ scoreCombinations = Set.fromList [ scoreFromString str | str <- scoreStrings ]
 --     maxGuess :: Guess,
 --     minGuess :: Guess
 -- }
-
--- qualifiedSet :: Set.Set String -> Set.Set (Int, String)
--- qualifiedSet = Set.map (\word -> (qualifyWord word, word))
 
 -- =========== FUNCIONES PARA MANEJAR TIPOS DE DATOS ===========
 
@@ -88,18 +86,56 @@ scoreFromString string = Score string (sum $ map qualifyChar string)
           qualifyChar '-'  = 2
           qualifyChar  c   = error "Caracter inválido" -- Nunca debería ocurrir
 
--- | Recibe una String de calificación y retorna una lista de filtros
+-- =========== FUNCIONES MISCELÁNEAS / HELPERS ===========
+
+-- | Recibe un Guess y un Score del usuario y retorna una lista de filtros
 -- que servirá para filtrar del conjunto las palabras inválidas
-interpretQualification :: String -> [String -> Bool]
-interpretQualification str = let f x = True in [f]
+getFilters :: String -> String -> [String -> Bool]
+getFilters guess score = filters1 ++ filters2
+    where
+        filters1 = posFilters guess score 0
+        filters2 = freqFilters guess score
+
+-- | Función auxiliar que genera filtros posicionales.
+posFilters :: String -> String -> Int -> [String -> Bool]
+posFilters "" _ _ = []
+posFilters (c1:w) (c2:sc) i
+    | c2 == 'T' = (\str -> str !! i == c1) : posFilters w sc (i+1)
+    | c2 == 'V' = (\str -> str !! i /= c1) : posFilters w sc (i+1)
+    | otherwise = posFilters w sc (i+1)
+
+-- | Función auxiliar que genera filtros de frecuencias.
+freqFilters :: String -> String -> [String -> Bool]
+freqFilters guess score = getFilters freqs
+    where freqs = frequency (zip guess score)
+          getFilters [] = []
+          getFilters (x:xs) = case x of
+            (c, 0) -> (\str -> count c str == 0) : getFilters xs
+            (c, n) -> (\str -> count c str >= n)  : getFilters xs
+
+-- | Función auxiliar de freqFilters.
+frequency :: [(Char, Char)] -> [(Char, Int)]
+frequency zipList = toList $
+    fromListWith (+)
+        [(c1, n) | (c1, c2) <- zipList,
+                    c2 /= 'T',
+                    let n = if c2 == 'V' then 1 else 0]
+
+-- | Cuenta el número de ocurrencias de un caracter en una String.
+count :: Char -> String -> Int
+count c = length . filter (==c)
 
 -- | Dada una lista de funciones que reciben String y retornan booleano, y
 -- una string, aplica todas las funciones de la lista a la string y retorna
 -- un único booleano (fold fashion)
-pruneFunction :: [String -> Bool] -> String -> Bool
-pruneFunction [] _ = True
-pruneFunction (f:fs) str = f str && pruneFunction fs str
+unifyFilter :: [String -> Bool] -> String -> Bool
+unifyFilter [] _       = True
+unifyFilter (f:fs) str = f str && unifyFilter fs str
 
--- | Cuenta el número de ocurrencias de un caracter en una String
-count :: Char -> String -> Int
-count c =  length . filter (==c)
+-- | Filtra el conjunto de palabras según el Score dado.
+filterSet :: Set Guess -> String -> String -> Set Guess
+filterSet words guess score =
+    let fils = getFilters guess score
+        f = unifyFilter fils
+    in
+        Set.filter (\(Guess str _) -> f str) words
