@@ -1,13 +1,13 @@
 import System.Environment
 import Control.Monad
 import System.IO
-import System.Random
 import System.Exit
 import Data.List
 import Data.Set ( Set, elemAt, fromDistinctAscList )
 import Data.Either
 import Utils.Checkers
 import Utils.Minimaxer
+import Utils.IOHelpers
 
 wordsFile = "./Palabras.txt"
 
@@ -20,7 +20,7 @@ main = do
     words <- loadWords wordsFile
     args <- getArgs
     if length args /= 1 || head args `notElem` modes
-        then die "Uso: wordle [mentemaestra|descifrador]"
+        then die "Uso: wordle <mentemaestra|descifrador>"
     else do
         if head args == "mentemaestra"
             then do
@@ -29,13 +29,6 @@ main = do
         else do
             -- decoderMode
             putStrLn "TODO"
-
--- | Carga el archivo de palabras en un Set.
-loadWords :: FilePath -> IO (Set String)
-loadWords path = do
-    contents <- readFile path
-    let words = fromDistinctAscList $ lines contents
-    return words
 
 -- | Ejecuta el modo mentemaestra del juego.
 --
@@ -76,22 +69,6 @@ mastermindMode words answer lives history = do
     else do
         -- Si el jugador no tiene más intentos, revela la palabra
         putStrLn $ "La palabra era \"" ++ answer ++ "\""
-
-
--- | Retorna una String aleatoria de un Set de Strings.
-getRandomWord :: Set String -> IO String
-getRandomWord words = do
-    let n = length words
-    -- Obtiene un generador pseudo-aleatorio del sistema operativo
-    gen <- getStdGen
-    -- Obtiene y retorna una palabra aleatoria
-    return $ elemAt (fst $ randomR (0, n-1) gen) words
-
--- | Imprime por salida estándar el historial de una partida de Wordle.
-printHistory :: [String] -> IO ()
-printHistory history = do
-    putStrLn "Comparte tu resultado:"
-    mapM_ putStrLn $ reverse history
 
 -- | Ejecuta el modo descifrador del juego.
 -- decoderMode :: a

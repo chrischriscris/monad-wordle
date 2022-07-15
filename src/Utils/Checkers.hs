@@ -27,10 +27,10 @@ import Data.Either ( isLeft, fromRight )
 -- * V donde la letra de la adivinación se encuentra en la respuesta pero en
 --   una posición distinta.
 -- * - donde la letra de la adivinación no se encuentra en la respuesta.
-type QualificationString = String
+type ScoreString = String
+
 type Guess = String
 type Answer = String
-
 
 -- ========== INTERFAZ EXTERNA DEL MÓDULO ==========
 
@@ -57,7 +57,7 @@ type Answer = String
 -- >>> checkGuess "SIEMPRE" "NUNCA"
 -- Left "El tamaño de las cadenas no coincide"
 checkGuess :: Guess -> Answer -> Set String
-    -> Either String QualificationString
+    -> Either String ScoreString
 checkGuess guess answer words
     | isLeft res       = res -- Propaga el error
     | otherwise        =
@@ -78,7 +78,7 @@ checkGuess guess answer words
 -- * Una string con las letras restantes por adivinar.
 -- * La string de calificación parcial con el formato descrito en `checkGuess`
 checkT :: Guess -> Answer
-    -> (QualificationString, String)
+    -> (ScoreString, String)
 checkT guess answer =
     let temp = zipWith (\x y -> if x == y then "T" else "-" ++ [y]) guess answer
         [resString, remChars] = transpose temp
@@ -88,8 +88,8 @@ checkT guess answer =
 -- chequeado los toros con la función `checkT` previamente.
 -- 
 -- Retorna una string de calificación.
-checkV :: Guess -> (QualificationString, String)
-    -> QualificationString
+checkV :: Guess -> (ScoreString, String)
+    -> ScoreString
 checkV "" _ = []
 checkV (h1:r1) (h2:r2, remAns)
     | h1 `elem` remAns = 'V' : checkV r1 (r2, delete h1 remAns)
