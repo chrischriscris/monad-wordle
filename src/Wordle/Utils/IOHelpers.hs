@@ -1,8 +1,13 @@
-module Utils.IOHelpers (
-    loadWords,
-    getRandomWord,
-    printHistory
-) where
+{-|
+Módulo      : Utils.IOHelpers
+Descripción : Funciones de ayuda de IO para implementación de Wordle.
+    en Haskell.
+Copyright   : (c) Christopher Gómez, 2022
+    Nestor Javier, 2022
+Licencia    : GPL-3
+-}
+
+module Wordle.Utils.IOHelpers where
 
 import System.IO
 import System.Random

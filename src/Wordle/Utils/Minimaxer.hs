@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-{-# LANGUAGE BlockArguments #-}
 {-|
 Módulo      : Utils.Minimaxer
 Descripción : Motor de minimax para implementación de Wordle.
@@ -8,18 +6,19 @@ Copyright   : (c) Christopher Gómez, 2022
     Nestor Javier, 2022
 Licencia    : GPL-3
 -}
-module Utils.Minimaxer (
+
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE BlockArguments #-}
+
+module Wordle.Utils.Minimaxer ( 
     Guess, Score,
-    initWordSet, initScoreSet,
+    scoreFromString, guessFromString,
     guessNext
 ) where
 
-import Data.Set ( Set, notMember, fromList )
+import Data.Set ( Set )
 import qualified Data.Set as Set
-import Data.List ( foldl' )
-import Data.Char ( isAlpha, toUpper )
-import Data.Either ( isLeft, fromLeft, fromRight )
-import Data.Map ( fromListWith, toList )
+import Data.Map ( toList, fromListWith )
 
 -- ============== DEFINICIONES DE TIPOS DE DATOS ==============
 
@@ -61,7 +60,6 @@ guessFromString word = Guess word (sum $ map qualifyChar word)
             | c `elem` "MPBG"  =  5
             | c `elem` "FHVYQ" =  8
             | c `elem` "JZXKW" = 10
-            | otherwise        =  0
 
 -- | Retorna un Score dado una string con la calificación del usuario,
 -- puntuada de acuerdo al algoritmo de Minimax.
@@ -73,21 +71,6 @@ scoreFromString string = Score string (sum $ map qualifyChar string)
     where qualifyChar 'T'  = 0
           qualifyChar 'V'  = 1
           qualifyChar '-'  = 2
-          qualifyChar  c   = error "Caracter inválido" -- Nunca debería ocurrir
-
--- =============== DEFINICIONES DE CONJUNTOS ==========================
-
--- | Crea el conjunto inicial con todas las Guess del juego, dadas estas
--- en un conjunto de String.
-initWordSet :: Set String -> Set Guess
-initWordSet = Set.map guessFromString
-
--- | Conjunto con todas las combinaciones de Scores posibles.
-initScoreSet :: Set Score
-initScoreSet = fromList [ scoreFromString str | str <- scoreStrings ]
-    where
-        x = "-VT"
-        scoreStrings = [[a, b, c, d, e] | a<-x, b<-x, c<-x, d<-x, e<-x]
 
 -- ============== MISCELÁNEOS ==============
 
@@ -95,20 +78,20 @@ initScoreSet = fromList [ scoreFromString str | str <- scoreStrings ]
 -- 
 -- Retorna:
 --
--- * Left mensaje si la string no es válida, con el mensaje de error.
--- * Right string si la string es válida, con la misma string.
+-- * Just mensaje si la string no es válida, con el mensaje de error.
+-- * Nothing string si la string es válida.
 -- 
 -- Una palabra es válida si:
 --
 -- * Tiene 5 caracteres.
 -- * Solo contiene los caracteres '-', 'V' y 'T'.
-validateScore :: String -> Either String String
+validateScore :: String -> Maybe String
 validateScore score
     | length score /= 5
-        = Left "La calificación debe contener 5 caracteres."
+        = Just "La calificación debe contener 5 caracteres."
     | any (`notElem` "TV-") score
-        = Left  "La calificación solo puede contener los caracteres -, V y T."
-    | otherwise = Right score
+        = Just "La calificación solo puede contener los caracteres -, V y T."
+    | otherwise = Nothing
 
 -- | Cuenta el número de ocurrencias de un elemento en una lista.
 count :: (Eq a) => a -> [a] -> Int
@@ -365,11 +348,11 @@ guessNext guess score guessSet scoreSet =
         -- Interpreta el árbol minimax y obtiene la adivinación
         nextGuess = interpret minimaxTree
     in
-        -- Si es inválida la string de calificación, retorna el mensaje de error
-        if isLeft verifScore
-            then Left $ fromLeft "" verifScore
-
-            -- Si es imposible la respuesta del usuario, retorna "T" de tramposo
-            else if Set.null guessSet'
-                then Left "T"
-                else Right (nextGuess, guessSet', scoreSet')
+        maybe
+        -- Si es válida la string de calificación
+        ( if Set.null guessSet'
+            -- Si no es posible el score dado, tramposo
+            then Left "T"
+            else Right (nextGuess, guessSet', scoreSet') )
+        -- Si es inválida, retorna el mensaje de error
+        Left verifScore

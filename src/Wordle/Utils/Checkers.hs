@@ -1,20 +1,22 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-|
 Módulo      : Utils.Checker
-Descripción : Chequeos para implementación de Wordle
+Descripción : Chequeos para implementación del modo Mentemaestra de Wordle
     en Haskell.
 Copyright   : (c) Christopher Gómez, 2022
     Nestor Javier, 2022
 Licencia    : GPL-3
 -}
-module Utils.Checkers (
+
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+
+module Wordle.Utils.Checkers (
     checkGuess
 ) where
 
 import Data.Set ( Set, notMember )
 import Data.List ( zipWith, transpose, delete )
 import Data.Char ( isAlpha, toUpper )
-import Data.Either ( isLeft, fromRight )
+import Data.Either ( isLeft )
 
 
 -- ========== ALIAS DE TIPOS PARA DOCUMENTACIÓN ==========

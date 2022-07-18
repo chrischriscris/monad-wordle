@@ -1,10 +1,5 @@
-HC = ghc
-CFLAGS = --make
-
-all: wordle
-
-wordle: wordle.hs Utils/Checkers.hs Utils/IOHelpers.hs Utils/Minimaxer.hs
-	$(HC) $(CFLAGS) wordle.hs
+all: 
+	ghc --make -o wordle Main.hs
 
 clean:
-	rm *.o *.hi wordle Utils/*.o Utils/*.hi
+	rm wordle *.hi *.o Wordle/*.hi Wordle/*.o Wordle/Utils/*.hi Wordle/Utils/*.o
