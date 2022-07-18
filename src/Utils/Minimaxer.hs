@@ -163,6 +163,10 @@ freqFilter score = \str -> length (filter f str) >= n && str /= score
 data Rose a = Leaf a | Node a [Rose a]
     deriving Show
 
+getNodeVal :: Rose a -> a
+getNodeVal (Leaf a  ) = a
+getNodeVal (Node a _) = a
+
 validateScore :: String -> Either String String
 validateScore score
     | length score /= 5
@@ -174,10 +178,9 @@ validateScore score
 generateMinLevel :: MinimaxNode -> [Rose MinimaxNode]
 generateMinLevel node =
     let (MinimaxNode val wSet sSet _ level _) = node
-        words = Set.take 10 wSet
+        words = Set.toList $ Set.take 10 wSet
         nodeList = map
-            (\(Guess w sc) -> MinimaxNode w wSet sSet sc (level+1) True)
-            (Set.toList words)
+            (\(Guess w sc) -> MinimaxNode w wSet sSet sc (level+1) True) words
 
         nextLevel = map generateMaxLevel nodeList
     in
@@ -199,7 +202,7 @@ generateMaxLevel node =
 
         nextLevel = map generateMinLevel nodeList
     in
-        if level == 4
+        if level + 1 == 4
             then map Leaf nodeList
             else map (Node node) nextLevel
 
@@ -220,9 +223,19 @@ guessNext guess score guessSet scoreSet
         scoreSet' = filterScoreSet scoreSet score
 
         parentNode = MinimaxNode score guessSet' scoreSet' 0 0 False
-        level1 = Set.take 10 guessSet'
-        minimaxTree = Node parentNode
-            in Left "HOLAS"
+        minimaxTree = Node parentNode $ generateMinLevel parentNode
+        bestGuess = interpret minimaxTree
+            in
+                if Set.null guessSet'
+                    then Left "Tramposo"
+                    else Right (bestGuess, guessSet', scoreSet')
+
+interpret :: Rose MinimaxNode -> String
+interpret tree =
+    value $ maximum (map getNodeVal childs)
+        where
+            Node _ childs = tree
+            
 
 data MinimaxNode = MinimaxNode {
     value   :: String,
@@ -231,4 +244,13 @@ data MinimaxNode = MinimaxNode {
     score    :: Int,
     depth    :: Int,
     minimum  :: Bool
-} 
+}
+
+instance Show MinimaxNode where
+    show a =
+        "MinimaxNode value" ++ show (value a) ++
+        " score" ++ show (score a) ++
+        " depth" ++ show (depth a) ++ "\n"
+
+instance Ord MinimaxNode where
+    compare a b = compare (score a) (score b)
