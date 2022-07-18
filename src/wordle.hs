@@ -1,14 +1,10 @@
 import System.Environment
-import Control.Monad
 import System.IO
-import System.Exit
-import Data.List
-import Data.Set ( Set, elemAt, fromDistinctAscList )
-import Data.Either
+import Data.Set ( Set )
+import Data.Either ( isLeft )
 import Utils.Checkers
 import Utils.Minimaxer
 import Utils.IOHelpers
-import Utils.Minimaxer (initWordSet, initScoreSet)
 
 wordsFile = "./Palabras.txt"
 
@@ -21,7 +17,7 @@ main = do
     words <- loadWords wordsFile
     args <- getArgs
     if length args /= 1 || head args `notElem` modes
-        then die "Uso: wordle <mentemaestra|descifrador>"
+        then putStrLn "Uso: wordle <mentemaestra|descifrador>"
     else do
         randomWord <- getRandomWord words
         if head args == "mentemaestra"
@@ -45,7 +41,7 @@ mastermindMode words answer lives history = do
         -- Obtiene la palabra del jugador y evalúa su respuesta
         putStr "DESCIFRADOR : "
         guess <- getLine
-        let eval = checkGuess guess answer words 
+        let eval = checkGuess guess answer words
 
         if isLeft eval then do
             -- Si es error se indica y continúa con los mismo intentos
@@ -69,11 +65,6 @@ mastermindMode words answer lives history = do
     else do
         -- Si el jugador no tiene más intentos, revela la palabra
         putStrLn $ "La palabra era \"" ++ answer ++ "\""
-
--- initializeDecoderMode :: Set String -> String -> IO()
--- initializeDecoderMode wordSet firstWord = do
---     let initWordSet = minimaxWords wordSet
---     decoderMode firstWord initWordSet initScoreSet 6
 
 -- | Ejecuta el modo descifrador del juego.
 --

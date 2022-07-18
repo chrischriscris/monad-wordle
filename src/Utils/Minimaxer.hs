@@ -8,9 +8,13 @@ Copyright   : (c) Christopher Gómez, 2022
     Nestor Javier, 2022
 Licencia    : GPL-3
 -}
-module Utils.Minimaxer where
+module Utils.Minimaxer (
+    Guess, Score,
+    initWordSet, initScoreSet,
+    guessNext
+) where
 
-import Data.Set ( Set, notMember )
+import Data.Set ( Set, notMember, fromList )
 import qualified Data.Set as Set
 import Data.List ( foldl' )
 import Data.Char ( isAlpha, toUpper )
@@ -80,7 +84,7 @@ initWordSet = Set.map guessFromString
 
 -- | Conjunto con todas las combinaciones de Scores posibles.
 initScoreSet :: Set Score
-initScoreSet = Set.fromList [ scoreFromString str | str <- scoreStrings ]
+initScoreSet = fromList [ scoreFromString str | str <- scoreStrings ]
     where
         x = "-VT"
         scoreStrings = [[a, b, c, d, e] | a<-x, b<-x, c<-x, d<-x, e<-x]
