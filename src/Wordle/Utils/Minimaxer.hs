@@ -1,5 +1,5 @@
 {-|
-Módulo      : Utils.Minimaxer
+Módulo      : Wordle.Utils.IOHelpers
 Descripción : Motor de minimax para implementación de Wordle.
     en Haskell.
 Copyright   : (c) Christopher Gómez, 2022

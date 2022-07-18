@@ -1,3 +1,12 @@
+{-|
+Módulo      : Wordle.Decoder
+Descripción : Implementación del modo mentemaestra de Wordle.
+    en Haskell.
+Copyright   : (c) Christopher Gómez, 2022
+    Nestor Javier, 2022
+Licencia    : GPL-3
+-}
+
 module Wordle.Mastermind where
 
 import Data.Set ( Set )
