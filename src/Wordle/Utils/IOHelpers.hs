@@ -1,5 +1,5 @@
 {-|
-Módulo      : Utils.IOHelpers
+Módulo      : Wordle.Utils.IOHelpers
 Descripción : Funciones de ayuda de IO para implementación de Wordle.
     en Haskell.
 Copyright   : (c) Christopher Gómez, 2022
