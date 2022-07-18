@@ -10,7 +10,7 @@ Licencia    : GPL-3
 -}
 module Utils.Minimaxer where
 
-import Data.Set ( Set )
+import Data.Set ( Set, notMember )
 import qualified Data.Set as Set
 import Data.List ( foldl' )
 import Data.Char ( isAlpha, toUpper )
@@ -284,7 +284,7 @@ guessNext guess score guessSet scoreSet =
             then Left $ fromLeft "" verifScore
 
             -- Si es imposible la respuesta del usuario, retorna "T" de tramposo
-            else if Set.null guessSet'
+            else if scoreFromString score `notMember` scoreSet'
                 then Left "T"
                 else Right (nextGuess, guessSet', scoreSet')
 
