@@ -3,7 +3,6 @@ Descripción : Entry-point de implementación de Wordle en Haskell.
     Se ejecuta con un solo argumento [mentemaestra|descifrador] para
     escoger el modo de juego
 Copyright   : (c) Christopher Gómez, 2022
-    Nestor Javier, 2022
 Licencia    : GPL-3
 -}
 

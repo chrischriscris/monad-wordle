@@ -3,7 +3,6 @@ Módulo      : Wordle.Utils.IOHelpers
 Descripción : Motor de minimax para implementación de Wordle.
     en Haskell.
 Copyright   : (c) Christopher Gómez, 2022
-    Nestor Javier, 2022
 Licencia    : GPL-3
 -}
 

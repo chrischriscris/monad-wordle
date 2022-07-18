@@ -3,7 +3,6 @@ Módulo      : Wordle.Decoder
 Descripción : Implementación del modo descifrador de Wordle.
     en Haskell.
 Copyright   : (c) Christopher Gómez, 2022
-    Nestor Javier, 2022
 Licencia    : GPL-3
 -}
 
