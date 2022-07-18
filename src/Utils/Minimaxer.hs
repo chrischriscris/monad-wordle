@@ -25,12 +25,18 @@ data Guess = Guess String Int
 instance Ord Guess where
     compare (Guess w1 s1) (Guess w2 s2) = compare (s1, w1) (s2, w2)
 
+guessString :: Guess -> String
+guessString (Guess word _) = word
+
 -- | Tipo de dato para representar una string de calificación del usuario.
 data Score = Score String Int
     deriving (Show, Eq)
 
 instance Ord Score where
     compare (Score w1 s1) (Score w2 s2) = compare (s2, w2) (s1, w1)
+
+scoreString :: Score -> String
+scoreString (Score string _) = string
 
 -- =========== FUNCIONES PARA MANEJAR TIPOS DE DATOS ===========
 
@@ -75,16 +81,6 @@ scoreCombinations = Set.fromList [ scoreFromString str | str <- scoreStrings ]
     where
         x = "-VT"
         scoreStrings = [[a, b, c, d, e] | a<-x, b<-x, c<-x, d<-x, e<-x]
-
--- data Minimaxer = Minimaxer {
---     alphabet :: Set Char,
---     wordlist :: [String],
---     maxDepth :: Int,
---     maxScore :: Int,
---     minScore :: Int,
---     maxGuess :: Guess,
---     minGuess :: Guess
--- }
 
 -- =========== FILTRADO DEL CONJUNTO DE PALABRAS ===========
 
@@ -135,8 +131,7 @@ frequency :: [(Char, Char)] -> [(Char, Int)]
 frequency zipList = toList $
     fromListWith (+)
         [(c1, n) | (c1, c2) <- zipList,
-                    c2 /= 'T',
-                    let n = if c2 == 'V' then 1 else 0]
+                    let n = if c2 `elem` "VT" then 1 else 0]
 
 -- | Cuenta el número de ocurrencias de un caracter en una String.
 count :: Char -> String -> Int
@@ -146,8 +141,7 @@ count c = length . filter (==c)
 
 filterScoreSet :: Set Score -> String -> Set Score
 filterScoreSet scores str =
-    let f = unifyFilters $ posFilters' str 0
-    in
+    let f = unifyFilters $ (freqFilter str) : (posFilters' str 0)  in
         Set.filter (\(Score sc _) -> f sc) scores
 
 -- | Función auxiliar que genera filtros posicionales.
@@ -156,3 +150,85 @@ posFilters' "" _ = []
 posFilters' (c:cs) i
     | c == 'T' = (\str -> str !! i == c) : posFilters' cs (i+1)
     | otherwise = posFilters' cs (i+1)
+
+-- | Función auxiliar que genera un filtro de frecuencia.
+freqFilter :: String -> (String -> Bool)
+freqFilter score = \str -> length (filter f str) >= n && str /= score
+    where
+        f x = x `elem` "VT"
+        n = length (filter f score)
+
+-- =========== MINIMAXER ===========
+
+data Rose a = Leaf a | Node a [Rose a]
+    deriving Show
+
+validateScore :: String -> Either String String
+validateScore score
+    | length score /= 5
+        = Left "La calificación debe contener 5 caracteres."
+    | any (`notElem` "TV-") score
+        = Left  "La calificación solo puede contener los caracteres -, V y T."
+    | otherwise = Right score
+
+generateMinLevel :: MinimaxNode -> [Rose MinimaxNode]
+generateMinLevel node =
+    let (MinimaxNode val wSet sSet _ level _) = node
+        words = Set.take 10 wSet
+        nodeList = map
+            (\(Guess w sc) -> MinimaxNode w wSet sSet sc (level+1) True)
+            (Set.toList words)
+
+        nextLevel = map generateMaxLevel nodeList
+    in
+        map (Node node) nextLevel
+
+generateMaxLevel :: MinimaxNode -> [Rose MinimaxNode]
+generateMaxLevel node =
+    let (MinimaxNode val wSet sSet _ level _) = node
+        scores = Set.take 10 $ Set.filter (isValidScore val wSet) sSet
+        nodeList = map
+            (\(Score str sc) -> MinimaxNode
+                str
+                (filterGuessSet wSet val str)
+                (filterScoreSet sSet str)
+                sc
+                (level+1)
+                False)
+            (Set.toList scores)
+
+        nextLevel = map generateMinLevel nodeList
+    in
+        if level == 4
+            then map Leaf nodeList
+            else map (Node node) nextLevel
+
+-- | Retorna un booleano indicando si un Score es válido en el contexto
+isValidScore :: String ->  Set Guess -> Score -> Bool
+isValidScore guess guessSet score =
+    not $ Set.null (filterGuessSet guessSet guess $ scoreString score)
+
+guessNext :: String -- ^ Palabra adivinada
+    -> String  -- ^ Score del usuario
+    -> Set Guess -- ^ Conjunto de palabras restantes
+    -> Set Score  -- ^ Conjunto de resultados restantes
+    -> Either String (String, Set Guess, Set Score) -- ^  Siguiente adivinación
+guessNext guess score guessSet scoreSet
+    | isLeft $ validateScore score = Left score
+    | otherwise = let
+        guessSet' = filterGuessSet guessSet guess score
+        scoreSet' = filterScoreSet scoreSet score
+
+        parentNode = MinimaxNode score guessSet' scoreSet' 0 0 False
+        level1 = Set.take 10 guessSet'
+        minimaxTree = Node parentNode
+            in Left "HOLAS"
+
+data MinimaxNode = MinimaxNode {
+    value   :: String,
+    wordSet :: Set Guess,
+    scoreSet :: Set Score,
+    score    :: Int,
+    depth    :: Int,
+    minimum  :: Bool
+} 
