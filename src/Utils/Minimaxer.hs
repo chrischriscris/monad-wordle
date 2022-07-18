@@ -177,18 +177,18 @@ validateScore score
 
 generateMinLevel :: MinimaxNode -> [Rose MinimaxNode]
 generateMinLevel node =
-    let (MinimaxNode val wSet sSet _ level _) = node
+    let (MinimaxNode val wSet sSet sc level) = node
         words = Set.toList $ Set.take 10 wSet
         nodeList = map
-            (\(Guess w sc) -> MinimaxNode w wSet sSet sc (level+1) True) words
+            (\(Guess w sc) -> MinimaxNode w wSet sSet sc (level+1)) words
 
-        nextLevel = map generateMaxLevel nodeList
+        nextLevel = map (\n -> Node n (generateMaxLevel n)) nodeList
     in
-        map (Node node) nextLevel
+        nextLevel
 
 generateMaxLevel :: MinimaxNode -> [Rose MinimaxNode]
 generateMaxLevel node =
-    let (MinimaxNode val wSet sSet _ level _) = node
+    let (MinimaxNode val wSet sSet _ level) = node
         scores = Set.take 10 $ Set.filter (isValidScore val wSet) sSet
         nodeList = map
             (\(Score str sc) -> MinimaxNode
@@ -196,15 +196,14 @@ generateMaxLevel node =
                 (filterGuessSet wSet val str)
                 (filterScoreSet sSet str)
                 sc
-                (level+1)
-                False)
+                (level+1))
             (Set.toList scores)
 
-        nextLevel = map generateMinLevel nodeList
+        nextLevel = map (\n -> Node n (generateMinLevel n)) nodeList
     in
         if level + 1 == 4
             then map Leaf nodeList
-            else map (Node node) nextLevel
+            else nextLevel
 
 -- | Retorna un booleano indicando si un Score es válido en el contexto
 isValidScore :: String ->  Set Guess -> Score -> Bool
@@ -222,7 +221,7 @@ guessNext guess score guessSet scoreSet
         guessSet' = filterGuessSet guessSet guess score
         scoreSet' = filterScoreSet scoreSet score
 
-        parentNode = MinimaxNode score guessSet' scoreSet' 0 0 False
+        parentNode = MinimaxNode score guessSet' scoreSet' 0 0
         minimaxTree = Node parentNode $ generateMinLevel parentNode
         bestGuess = interpret minimaxTree
             in
@@ -230,20 +229,18 @@ guessNext guess score guessSet scoreSet
                     then Left "Tramposo"
                     else Right (bestGuess, guessSet', scoreSet')
 
-interpret :: Rose MinimaxNode -> String
-interpret tree =
-    value $ maximum (map getNodeVal childs)
-        where
-            Node _ childs = tree
-            
+-- interpret :: Rose MinimaxNode -> String
+-- interpret tree =
+--     value $ maximum (map getNodeVal childs)
+--         where
+--             Node _ childs = tree
 
 data MinimaxNode = MinimaxNode {
     value   :: String,
     wordSet :: Set Guess,
     scoreSet :: Set Score,
     score    :: Int,
-    depth    :: Int,
-    minimum  :: Bool
+    depth    :: Int
 }
 
 instance Show MinimaxNode where
@@ -251,6 +248,3 @@ instance Show MinimaxNode where
         "MinimaxNode value" ++ show (value a) ++
         " score" ++ show (score a) ++
         " depth" ++ show (depth a) ++ "\n"
-
-instance Ord MinimaxNode where
-    compare a b = compare (score a) (score b)
