@@ -22,12 +22,13 @@ main = do
     if length args /= 1 || head args `notElem` modes
         then die "Uso: wordle <mentemaestra|descifrador>"
     else do
+        randomWord <- getRandomWord words
         if head args == "mentemaestra"
             then do
                 randomWord <- getRandomWord words
                 mastermindMode words randomWord 6 []
-        else do
-            -- decoderMode
+            else do
+                initializeDecoderMode words randomWord
             putStrLn "TODO"
 
 -- | Ejecuta el modo mentemaestra del juego.
@@ -69,6 +70,58 @@ mastermindMode words answer lives history = do
     else do
         -- Si el jugador no tiene más intentos, revela la palabra
         putStrLn $ "La palabra era \"" ++ answer ++ "\""
+
+initializeDecoderMode :: Set String -> String -> IO()
+initializeDecoderMode wordSet firstWord = do
+    initWordSet = minimaxWords wordSet
+    decoderMode firstWord initWordSet initScoreSet 6
+
+-- | Ejecuta el modo mentemaestra del juego.
+--
+-- Argumentos:
+--
+-- * El conjunto de palabras del juego.
+-- * La palabra a adivinar.
+-- * El número de intentos restantes.
+-- * Lista de Strings con las calificaciones parciales.
+decoderMode :: String -> Set Guess -> Set Score -> Int -> IO ()
+decoderMode guess wordSet scoreSet lives = do
+    if lives /= 0 then do
+        putStrLn $ "Intento " ++ show (7 - lives) ++ ":"
+
+        -- Presenta al usuario la adivinación
+        putStrLn $ "DESCIFRADOR : " ++ show guess
+        putStr $ "MENTEMAESTRA : "
+        userScore <- getLine
+
+        if userScore == "TTTTT" then do
+            -- Si la computadora ha acertado, termina
+            putStrLn "\n¡Gané! :)\n"
+        else do
+            let eval = guessNext guess userScore wordSet scoreSet
+
+            if isLeft eval then do
+                -- Si es error se indica y continúa con los mismo intentos
+                let Left error = eval
+                putStrLn $ "Error: " ++ error ++ "\n"
+                decoderMode guess wordSet scoreSet (lives - 1)
+
+            else do
+                -- Si es válida, pasa al siguiente intento
+                let Right (bestGuess, wordSet', scoreSet') = nextGuess
+                
+                putStrLn score
+
+                if score == "TTTTT" then do
+                    -- Si el jugador ha acertado, imprime la palabra y termina
+                    putStrLn "\n¡Ganaste!\n"
+                    printHistory (score:history)
+                else do
+                    putStr "\n"
+                    mastermindMode words answer (lives - 1) (score:history)
+    else do
+        -- Si el jugador no tiene más intentos, revela la palabra
+        putStrLn "¡Ganaste! :("
 
 -- | Ejecuta el modo descifrador del juego.
 -- decoderMode :: a

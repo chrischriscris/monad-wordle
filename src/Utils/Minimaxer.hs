@@ -25,6 +25,7 @@ data Guess = Guess String Int
 instance Ord Guess where
     compare (Guess w1 s1) (Guess w2 s2) = compare (s1, w1) (s2, w2)
 
+-- | Obtiene la String de una Guess.
 guessString :: Guess -> String
 guessString (Guess word _) = word
 
@@ -35,6 +36,7 @@ data Score = Score String Int
 instance Ord Score where
     compare (Score w1 s1) (Score w2 s2) = compare (s2, w2) (s1, w1)
 
+-- | Obtiene la String de un Score.
 scoreString :: Score -> String
 scoreString (Score string _) = string
 
@@ -76,8 +78,8 @@ minimaxWords :: Set String -> Set Guess
 minimaxWords = Set.map guessFromString
 
 -- | Conjunto con todas las combinaciones de Scores posibles.
-scoreCombinations :: Set Score
-scoreCombinations = Set.fromList [ scoreFromString str | str <- scoreStrings ]
+initScoreSet :: Set Score
+initScoreSet = Set.fromList [ scoreFromString str | str <- scoreStrings ]
     where
         x = "-VT"
         scoreStrings = [[a, b, c, d, e] | a<-x, b<-x, c<-x, d<-x, e<-x]
@@ -141,7 +143,7 @@ count c = length . filter (==c)
 
 filterScoreSet :: Set Score -> String -> Set Score
 filterScoreSet scores str =
-    let f = unifyFilters $ (freqFilter str) : (posFilters' str 0)  in
+    let f = unifyFilters $ freqFilter str : posFilters' str 0  in
         Set.filter (\(Score sc _) -> f sc) scores
 
 -- | Función auxiliar que genera filtros posicionales.
@@ -160,13 +162,41 @@ freqFilter score = \str -> length (filter f str) >= n && str /= score
 
 -- =========== MINIMAXER ===========
 
+-- =========== ÁRBOL Y NODOS ===========
+
+-- | Tipo de dato para representar un árbol con cantidad no acotada
+-- de nodos hijo.
 data Rose a = Leaf a | Node a [Rose a]
     deriving Show
 
-getNodeVal :: Rose a -> a
-getNodeVal (Leaf a  ) = a
-getNodeVal (Node a _) = a
+-- | Tipo de dato para que representa un nodo del agente Minimax.
+data MinimaxNode = MinimaxNode {
+    value   :: String,
+    wordSet :: Set Guess,
+    scoreSet :: Set Score,
+    score    :: Int,
+    depth    :: Int
+} deriving (Show, Eq)
 
+instance Ord MinimaxNode where
+    compare a b = compare (score a) (score b)
+
+-- | Obtiene el valor de un nodo de Rose.
+getNodeVal :: Rose a -> a
+getNodeVal (Leaf val  ) = val
+getNodeVal (Node val _) = val
+
+-- | Verifica si una string de calificación del usuario es válida.
+-- 
+-- Retorna:
+--
+-- * Left mensaje si la string no es válida, con el mensaje de error.
+-- * Right string si la string es válida, con la misma string.
+-- 
+-- Una palabra es válida si:
+--
+-- * Tiene 5 caracteres.
+-- * Solo contiene los caracteres '-', 'V' y 'T'.
 validateScore :: String -> Either String String
 validateScore score
     | length score /= 5
@@ -175,6 +205,11 @@ validateScore score
         = Left  "La calificación solo puede contener los caracteres -, V y T."
     | otherwise = Right score
 
+-- | Genera un nivel de minimización de árbol de Minimax, dado un nodo padre.
+-- 
+-- Un nivel de minimización es una lista de nodos hijo, donde cada nodo
+-- contiene las 10 palabras con menor puntuación que se pueden adivinar
+-- con la string de adivinación del padre.
 generateMinLevel :: MinimaxNode -> [Rose MinimaxNode]
 generateMinLevel node =
     let (MinimaxNode val wSet sSet sc level) = node
@@ -182,10 +217,15 @@ generateMinLevel node =
         nodeList = map
             (\(Guess w sc) -> MinimaxNode w wSet sSet sc (level+1)) words
 
-        nextLevel = map (\n -> Node n (generateMaxLevel n)) nodeList
+        nextLevel = map (\n -> Node n $ generateMaxLevel n) nodeList
     in
         nextLevel
 
+-- | Genera un nivel de maximización de árbol de Minimax, dado un nodo padre.
+-- 
+-- Un nivel de maximización es una lista de nodos hijo, donde cada nodo
+-- contiene las 10 strings de score con mayor puntuación que son posibles
+-- respuestas del usuario.
 generateMaxLevel :: MinimaxNode -> [Rose MinimaxNode]
 generateMaxLevel node =
     let (MinimaxNode val wSet sSet _ level) = node
@@ -199,17 +239,32 @@ generateMaxLevel node =
                 (level+1))
             (Set.toList scores)
 
-        nextLevel = map (\n -> Node n (generateMinLevel n)) nodeList
+        nextLevel = map (\n -> Node n $ generateMinLevel n) nodeList
     in
         if level + 1 == 4
             then map Leaf nodeList
             else nextLevel
 
--- | Retorna un booleano indicando si un Score es válido en el contexto
+-- | Retorna un booleano indicando si un Score es válido dada la string
+-- de adivinación y el conjunto de adivinaciones posibles.
 isValidScore :: String ->  Set Guess -> Score -> Bool
 isValidScore guess guessSet score =
     not $ Set.null (filterGuessSet guessSet guess $ scoreString score)
 
+-- | Genera una adivinación para la siguiente ronda.
+--
+-- Recibe la última adivinación realizada, la string de score del usuario,
+-- el conjunto de adivinaciones posibles, el conjunto de 
+-- 
+-- Retorna:
+--
+-- * Left mensaje si la string no es válida, con el mensaje de error.
+-- * Right string si la string es válida, con la misma string.
+-- 
+-- Una palabra es válida si:
+--
+-- * Tiene 5 caracteres.
+-- * Solo contiene los caracteres '-', 'V' y 'T'.
 guessNext :: String -- ^ Palabra adivinada
     -> String  -- ^ Score del usuario
     -> Set Guess -- ^ Conjunto de palabras restantes
@@ -229,22 +284,26 @@ guessNext guess score guessSet scoreSet
                     then Left "Tramposo"
                     else Right (bestGuess, guessSet', scoreSet')
 
--- interpret :: Rose MinimaxNode -> String
--- interpret tree =
---     value $ maximum (map getNodeVal childs)
---         where
---             Node _ childs = tree
+interpret :: Rose MinimaxNode -> String
+interpret tree =
+    value $ minimum (map getNodeVal childs)
+        where
+            tree' = scoreTree tree
+            Node _ childs = tree'
 
-data MinimaxNode = MinimaxNode {
-    value   :: String,
-    wordSet :: Set Guess,
-    scoreSet :: Set Score,
-    score    :: Int,
-    depth    :: Int
-}
+scoreTree :: Rose MinimaxNode -> Rose MinimaxNode
+scoreTree (Node val childs) =
+    let childs' = map scoreNode childs
+    in Node val childs'
 
-instance Show MinimaxNode where
-    show a =
-        "MinimaxNode value" ++ show (value a) ++
-        " score" ++ show (score a) ++
-        " depth" ++ show (depth a) ++ "\n"
+scoreNode :: Rose MinimaxNode -> Rose MinimaxNode
+scoreNode leaf@(Leaf val) = leaf
+scoreNode tree@(Node val childs) =
+    let
+        f l@(Leaf val) = l
+        f anotherTree = scoreNode anotherTree
+        childs' = map f childs
+        (MinimaxNode v wS sS sc d) = val
+        val' = MinimaxNode v wS sS (sc + sum (map (score . getNodeVal) childs')) d
+    in
+        Node val' childs'
