@@ -8,6 +8,7 @@ import Data.Either
 import Utils.Checkers
 import Utils.Minimaxer
 import Utils.IOHelpers
+import Utils.Minimaxer (initWordSet, initScoreSet)
 
 wordsFile = "./Palabras.txt"
 
@@ -25,10 +26,9 @@ main = do
         randomWord <- getRandomWord words
         if head args == "mentemaestra"
             then do
-                randomWord <- getRandomWord words
                 mastermindMode words randomWord 6 []
             else do
-                initializeDecoderMode words randomWord
+                decoderMode randomWord (initWordSet words) initScoreSet 6
 
 -- | Ejecuta el modo mentemaestra del juego.
 --
@@ -70,19 +70,19 @@ mastermindMode words answer lives history = do
         -- Si el jugador no tiene más intentos, revela la palabra
         putStrLn $ "La palabra era \"" ++ answer ++ "\""
 
-initializeDecoderMode :: Set String -> String -> IO()
-initializeDecoderMode wordSet firstWord = do
-    let initWordSet = minimaxWords wordSet
-    decoderMode firstWord initWordSet initScoreSet 6
+-- initializeDecoderMode :: Set String -> String -> IO()
+-- initializeDecoderMode wordSet firstWord = do
+--     let initWordSet = minimaxWords wordSet
+--     decoderMode firstWord initWordSet initScoreSet 6
 
--- | Ejecuta el modo mentemaestra del juego.
+-- | Ejecuta el modo descifrador del juego.
 --
 -- Argumentos:
 --
--- * El conjunto de palabras del juego.
--- * La palabra a adivinar.
+-- * El intento de adivinación actual.
+-- * El conjunto de posibles adivinaciones en el contexto.
+-- * El conjunto de posibles strings de Score del usuario en el contexto.
 -- * El número de intentos restantes.
--- * Lista de Strings con las calificaciones parciales.
 decoderMode :: String -> Set Guess -> Set Score -> Int -> IO ()
 decoderMode guess wordSet scoreSet lives = do
     if lives /= 0 then do

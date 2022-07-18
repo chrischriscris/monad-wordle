@@ -75,8 +75,8 @@ scoreFromString string = Score string (sum $ map qualifyChar string)
 
 -- | Crea el conjunto inicial con todas las Guess del juego, dadas estas
 -- en un conjunto de String.
-minimaxWords :: Set String -> Set Guess
-minimaxWords = Set.map guessFromString
+initWordSet :: Set String -> Set Guess
+initWordSet = Set.map guessFromString
 
 -- | Conjunto con todas las combinaciones de Scores posibles.
 initScoreSet :: Set Score
@@ -151,12 +151,11 @@ posFilters' :: String -> Int -> [String -> Bool]
 posFilters' "" _ = []
 posFilters' (c:cs) i
     | c == 'T' = (\str -> str !! i == c) : posFilters' cs (i+1)
-    | c == 'T' = (\str -> str !! i == c) : posFilters' cs (i+1)
     | otherwise = posFilters' cs (i+1)
 
 -- | Función auxiliar que genera un filtro de frecuencia.
 freqFilter :: String -> (String -> Bool)
-freqFilter score = \str -> length (filter f str) >= n && str /= score
+freqFilter score = \str -> length (filter f str) >= n
     where
         f x = x `elem` "VT"
         n = length (filter f score)
