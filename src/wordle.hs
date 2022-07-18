@@ -29,7 +29,6 @@ main = do
                 mastermindMode words randomWord 6 []
             else do
                 initializeDecoderMode words randomWord
-            putStrLn "TODO"
 
 -- | Ejecuta el modo mentemaestra del juego.
 --
@@ -73,7 +72,7 @@ mastermindMode words answer lives history = do
 
 initializeDecoderMode :: Set String -> String -> IO()
 initializeDecoderMode wordSet firstWord = do
-    initWordSet = minimaxWords wordSet
+    let initWordSet = minimaxWords wordSet
     decoderMode firstWord initWordSet initScoreSet 6
 
 -- | Ejecuta el modo mentemaestra del juego.
@@ -90,8 +89,8 @@ decoderMode guess wordSet scoreSet lives = do
         putStrLn $ "Intento " ++ show (7 - lives) ++ ":"
 
         -- Presenta al usuario la adivinación
-        putStrLn $ "DESCIFRADOR : " ++ show guess
-        putStr $ "MENTEMAESTRA : "
+        putStrLn $ "DESCIFRADOR  : " ++ guess
+        putStr "MENTEMAESTRA : "
         userScore <- getLine
 
         if userScore == "TTTTT" then do
@@ -101,27 +100,20 @@ decoderMode guess wordSet scoreSet lives = do
             let eval = guessNext guess userScore wordSet scoreSet
 
             if isLeft eval then do
-                -- Si es error se indica y continúa con los mismo intentos
                 let Left error = eval
-                putStrLn $ "Error: " ++ error ++ "\n"
-                decoderMode guess wordSet scoreSet (lives - 1)
-
+                if error == "T" then do
+                    -- Si el usuario hacía trampa se indica y sale del juego
+                    putStrLn "\n¡Tramposo! ›:("
+                else do
+                    -- Si es error se indica y continúa con los mismo intentos
+                    putStrLn $ "Error: " ++ error ++ "\n"
+                    decoderMode guess wordSet scoreSet lives
             else do
                 -- Si es válida, pasa al siguiente intento
-                let Right (bestGuess, wordSet', scoreSet') = nextGuess
-                
-                putStrLn score
+                let Right (nextGuess, wordSet', scoreSet') = eval
 
-                if score == "TTTTT" then do
-                    -- Si el jugador ha acertado, imprime la palabra y termina
-                    putStrLn "\n¡Ganaste!\n"
-                    printHistory (score:history)
-                else do
-                    putStr "\n"
-                    mastermindMode words answer (lives - 1) (score:history)
+                putStr "\n"
+                decoderMode nextGuess wordSet' scoreSet' (lives - 1)
     else do
         -- Si el jugador no tiene más intentos, revela la palabra
-        putStrLn "¡Ganaste! :("
-
--- | Ejecuta el modo descifrador del juego.
--- decoderMode :: a
+        putStrLn "\n¡Ganaste! :("

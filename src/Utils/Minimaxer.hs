@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE BlockArguments #-}
 {-|
 Módulo      : Utils.Minimaxer
 Descripción : Motor de minimax para implementación de Wordle.
@@ -13,7 +14,7 @@ import Data.Set ( Set )
 import qualified Data.Set as Set
 import Data.List ( foldl' )
 import Data.Char ( isAlpha, toUpper )
-import Data.Either ( isLeft, fromRight )
+import Data.Either ( isLeft, fromLeft, fromRight )
 import Data.Map ( fromListWith, toList )
 
 -- ============== DEFINICIONES DE TIPOS DE DATOS ==============
@@ -116,8 +117,7 @@ posFilters :: String -> String -> Int -> [String -> Bool]
 posFilters "" _ _ = []
 posFilters (c1:w) (c2:sc) i
     | c2 == 'T' = (\str -> str !! i == c1) : posFilters w sc (i+1)
-    | c2 == 'V' = (\str -> str !! i /= c1) : posFilters w sc (i+1)
-    | otherwise = posFilters w sc (i+1)
+    | otherwise = (\str -> str !! i /= c1) : posFilters w sc (i+1)
 
 -- | Función auxiliar que genera filtros de frecuencias.
 freqFilters :: String -> String -> [String -> Bool]
@@ -150,6 +150,7 @@ filterScoreSet scores str =
 posFilters' :: String -> Int -> [String -> Bool]
 posFilters' "" _ = []
 posFilters' (c:cs) i
+    | c == 'T' = (\str -> str !! i == c) : posFilters' cs (i+1)
     | c == 'T' = (\str -> str !! i == c) : posFilters' cs (i+1)
     | otherwise = posFilters' cs (i+1)
 
@@ -269,20 +270,24 @@ guessNext :: String -- ^ Palabra adivinada
     -> String  -- ^ Score del usuario
     -> Set Guess -- ^ Conjunto de palabras restantes
     -> Set Score  -- ^ Conjunto de resultados restantes
-    -> Either String (String, Set Guess, Set Score) -- ^  Siguiente adivinación
-guessNext guess score guessSet scoreSet
-    | isLeft $ validateScore score = Left score
-    | otherwise = let
-        guessSet' = filterGuessSet guessSet guess score
+    -> Either String (String, Set Guess, Set Score) -- ^  Contexto de la siguiente adivinación
+guessNext guess score guessSet scoreSet =
+    let verifScore = validateScore score
         scoreSet' = filterScoreSet scoreSet score
+        guessSet' = filterGuessSet guessSet guess score
 
         parentNode = MinimaxNode score guessSet' scoreSet' 0 0
         minimaxTree = Node parentNode $ generateMinLevel parentNode
-        bestGuess = interpret minimaxTree
-            in
-                if Set.null guessSet'
-                    then Left "Tramposo"
-                    else Right (bestGuess, guessSet', scoreSet')
+        nextGuess = interpret minimaxTree
+    in
+        -- Si es inválida la string de calificación, retorna el mensaje de error
+        if isLeft verifScore
+            then Left $ fromLeft "" verifScore
+
+            -- Si es imposible la respuesta del usuario, retorna "T" de tramposo
+            else if Set.null guessSet'
+                then Left "T"
+                else Right (nextGuess, guessSet', scoreSet')
 
 interpret :: Rose MinimaxNode -> String
 interpret tree =
