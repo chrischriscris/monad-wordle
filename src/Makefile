@@ -1,5 +1,14 @@
 all: 
 	ghc --make -o wordle Main.hs
 
+docs:
+	haddock --html -o docs **.hs
+
 clean:
-	rm wordle *.hi *.o Wordle/*.hi Wordle/*.o Wordle/Utils/*.hi Wordle/Utils/*.o
+	rm wordle
+	find . -name "*.o" -type f -delete
+	find . -name "*.hi" -type f -delete
+
+cleandocs:
+	rm -rf docs
+	mkdir docs

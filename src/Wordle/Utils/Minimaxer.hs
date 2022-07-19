@@ -7,7 +7,7 @@ Licencia    : GPL-3
 -}
 
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-{-# LANGUAGE BlockArguments #-}
+{-# OPTIONS_HADDOCK ignore-exports #-}
 
 module Wordle.Utils.Minimaxer ( 
     Guess, Score,
@@ -19,7 +19,8 @@ import Data.Set ( Set )
 import qualified Data.Set as Set
 import Data.Map ( toList, fromListWith )
 
--- ============== DEFINICIONES DE TIPOS DE DATOS ==============
+-- $doc
+-- == Definiciones de tipos de datos
 
 -- | Tipo de dato para representar una palabra.
 data Guess = Guess String Int
@@ -43,7 +44,9 @@ instance Ord Score where
 scoreString :: Score -> String
 scoreString (Score string _) = string
 
--- =========== FUNCIONES PARA MANEJAR TIPOS DE DATOS ===========
+
+-- $doc
+-- == Funciones para manejar tipos de datos
 
 -- | Retorna un Guess dada una palabra del conjunto de palabras, puntuada
 -- de acuerdo al algoritmo de Minimax.
@@ -71,7 +74,8 @@ scoreFromString string = Score string (sum $ map qualifyChar string)
           qualifyChar 'V'  = 1
           qualifyChar '-'  = 2
 
--- ============== MISCELÁNEOS ==============
+-- $doc
+-- == Funciones misceláneas
 
 -- | Verifica si una string de calificación del usuario es válida.
 -- 
@@ -104,7 +108,8 @@ isValidScore guess guessSet score =
     -- adivinaciones usando ese Score tiene al menos un elemento
     not $ Set.null (filterGuessSet guessSet guess $ scoreString score)
 
--- =========== FILTRADO DEL CONJUNTO DE PALABRAS ===========
+-- $doc
+-- == Filtrado del conjunto de palabras
 
 -- | Filtra el conjunto de palabras posibles según las Strings dadas.
 --
@@ -148,7 +153,8 @@ frequency zipList = toList $
         [(c1, n) | (c1, c2) <- zipList,
                     let n = if c2 `elem` "VT" then 1 else 0]
 
--- =========== FILTRADO DEL CONJUNTO DE SCORES ===========
+-- $doc
+-- == Filtrado del conjunto de puntuaciones posibles
 
 -- | Filtra el conjunto de Scores posibles tras la Score dada.
 --
@@ -179,9 +185,11 @@ unifyFilters :: [String -> Bool] -> String -> Bool
 unifyFilters [] _       = True
 unifyFilters (f:fs) str = f str && unifyFilters fs str
 
--- =========== AGENTE MINIMAX ===========
+-- $doc
+-- == Agente Minimax
 
--- =========== DEFINICIÓN DE ÁRBOL Y NODOS ===========
+-- $doc
+-- == Definición de árbol y sus nodos
 
 -- | Tipo de dato para representar un árbol con cantidad no acotada
 -- de nodos hijos.
@@ -206,7 +214,8 @@ getNodeVal :: Rose a -> a
 getNodeVal (Leaf val  ) = val
 getNodeVal (Node val _) = val
 
--- =========== GENERACIÓN E INTERPRETACIÓN DEL ÁRBOL MINIMAX ===========
+-- $doc
+-- == Generación e interpretación del árbol Minimax
 
 -- | Genera un nivel de minimización de árbol de Minimax, dado un nodo padre.
 -- 
@@ -312,7 +321,8 @@ scoreNode tree@(Node val childs) =
         val' = MinimaxNode v wS sS (sc + sum (map (score . getNodeVal) childs')) d
     in Node val' childs'
 
--- =========== GENERACIÓN DE LA ADIVINACIÓN ===========
+-- $doc
+-- == Generación de la adivinación
 
 -- | Genera una adivinación para la siguiente ronda.
 --

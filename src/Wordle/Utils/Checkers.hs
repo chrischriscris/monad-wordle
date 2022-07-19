@@ -7,6 +7,7 @@ Licencia    : GPL-3
 -}
 
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_HADDOCK ignore-exports #-}
 
 module Wordle.Utils.Checkers (
     checkGuess
@@ -18,7 +19,8 @@ import Data.Char ( isAlpha, toUpper )
 import Data.Either ( isLeft )
 
 
--- ========== ALIAS DE TIPOS PARA DOCUMENTACIÓN ==========
+-- $doc
+-- == Aliases de tipos
 
 -- | String de calificación de una adivinación de Wordle, tiene el siguiente
 -- formato:
@@ -33,7 +35,8 @@ type ScoreString = String
 type Guess = String
 type Answer = String
 
--- ========== INTERFAZ EXTERNA DEL MÓDULO ==========
+-- $doc
+-- == Interfaz extena del módulo
 
 -- | Chequea la validez y califica una adivinación de Wordle.
 --
@@ -69,7 +72,8 @@ checkGuess guess answer words
         res = validateGuess guess words
 
 
--- ========== FUNCIONES DE CHEQUEO ==========
+-- $doc
+-- == Funciones de chequeo
 
 -- | Chequea los toros de una palabra, dada la adivinación y la respuesta
 -- esperada.
@@ -96,7 +100,8 @@ checkV (h1:r1) (h2:r2, remAns)
     | h1 `elem` remAns = 'V' : checkV r1 (r2, delete h1 remAns)
     | otherwise        = (if h2 == 'T' then 'T' else '-') : checkV r1 (r2, remAns)
 
--- ========== FUNCIONES DE VALIDACIÓN ==========
+-- $doc
+-- == Funciones de validación
 
 -- | Verifica si una palabra es valida, dadas la palabra y un Set con
 -- las palabras válidas.

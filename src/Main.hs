@@ -1,11 +1,3 @@
-{-|
-Descripción : Entry-point de implementación de Wordle en Haskell.
-    Se ejecuta con un solo argumento [mentemaestra|descifrador] para
-    escoger el modo de juego
-Copyright   : (c) Christopher Gómez, 2022
-Licencia    : GPL-3
--}
-
 import System.Environment ( getArgs )
 import System.IO ( stdout, hSetBuffering, BufferMode(NoBuffering) )
 import Wordle.Decoder
@@ -14,6 +6,10 @@ import Wordle.Utils.IOHelpers ( loadWords, getRandomWord )
 
 wordsFile = "./Palabras.txt"
 
+-- | Entry-point de implementación de Wordle en Haskell.
+--
+-- Lee un solo argumento de línea de comandos, 'mentemaestra' o 'descifrador'
+-- para escoger el modo de juego
 main = do
     -- Configura el buffering de la salida estándar para que ocurra la
     -- salida de inmediato
