@@ -6,7 +6,7 @@ Copyright   : (c) Christopher Gómez, 2022
 Licencia    : GPL-3
 -}
 
-import System.Environment
+import System.Environment ( getArgs )
 import System.IO ( stdout, hSetBuffering, BufferMode(NoBuffering) )
 import Wordle.Decoder
 import Wordle.Mastermind
@@ -19,6 +19,7 @@ main = do
     -- salida de inmediato
     hSetBuffering stdout NoBuffering
     let modes = ["mentemaestra", "descifrador"]
+    args <- getArgs
 
     -- Valida los argumentos de línea de comando
     if length args /= 1 || head args `notElem` modes
