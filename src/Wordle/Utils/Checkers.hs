@@ -1,5 +1,5 @@
 {-|
-Módulo      : Wordle.Utils.Checker
+Módulo      : Wordle.Utils.Checkers
 Descripción : Chequeos para implementación del modo Mentemaestra de Wordle
     en Haskell.
 Copyright   : (c) Christopher Gómez, 2022

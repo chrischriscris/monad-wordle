@@ -1,5 +1,5 @@
 {-|
-Módulo      : Wordle.Utils.IOHelpers
+Módulo      : Wordle.Utils.Minimaxer
 Descripción : Motor de minimax para implementación de Wordle.
     en Haskell.
 Copyright   : (c) Christopher Gómez, 2022
@@ -190,11 +190,11 @@ data Rose a = Leaf a | Node a [Rose a]
 
 -- | Tipo de dato para que representa un nodo del agente Minimax.
 data MinimaxNode = MinimaxNode {
-    value   :: String, -- ^ Valor del nodo (una palabra o una puntuación).
-    wordSet :: Set Guess, -- ^ Conjunto de Guess válidos al momento.
+    value    :: String,    -- ^ Valor del nodo (una palabra o una puntuación).
+    wordSet  :: Set Guess, -- ^ Conjunto de Guess válidos al momento.
     scoreSet :: Set Score, -- ^ Conjunto de Scores válidos al momento.
-    score    :: Int, -- ^ Puntuación minimax del nodo.
-    depth    :: Int -- ^ Profundidad del nodo en el árbol.
+    score    :: Int,       -- ^ Puntuación minimax del nodo.
+    depth    :: Int        -- ^ Profundidad del nodo en el árbol.
 } deriving (Show, Eq)
 
 -- Nodos se ordenan según su puntuación
@@ -263,7 +263,7 @@ generateMaxLevel node =
 -- 
 -- Retorna:
 --
--- * Una String con la próxima adivinación
+-- * Una String con la próxima adivinación.
 interpret :: Rose MinimaxNode -> String
 interpret tree =
     -- Toma el mínimo de los hijos del primer nivel
@@ -321,17 +321,17 @@ scoreNode tree@(Node val childs) =
 -- 
 -- Retorna:
 --
--- * Left mensaje si la string de adivinación no es válida o es imposible
+-- * Left mensaje si la string de puntuación no es válida o es imposible
 --   el score dado, con el mensaje de error en el primer caso, o "T" en
 --   el segundo.
 -- * Right (nextGuess, guessSet', scoreSet') en caso contrario, con la
 --   adivinación generada y los conjuntos de guess y score filtrados para
 --   una siguiente ronda.
-guessNext :: String -- ^ Palabra adivinada
-    -> String  -- ^ Score del usuario
-    -> Set Guess -- ^ Conjunto de palabras restantes
-    -> Set Score  -- ^ Conjunto de scores restantes
-    -> Either String (String, Set Guess, Set Score) -- ^  Contexto de la siguiente adivinación
+guessNext :: String    -- ^ Palabra adivinada
+          -> String    -- ^ Score del usuario
+          -> Set Guess -- ^ Conjunto de palabras restantes
+          -> Set Score -- ^ Conjunto de scores restantes
+          -> Either String (String, Set Guess, Set Score) -- ^ Contexto de la siguiente adivinación
 guessNext guess score guessSet scoreSet =
     -- Verifica la string de score del usuario
     let verifScore = validateScore score
