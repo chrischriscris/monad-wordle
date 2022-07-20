@@ -21,8 +21,8 @@ import Wordle.Utils.Minimaxer
 -- * El conjunto de posibles adivinaciones en el contexto.
 -- * El conjunto de posibles strings de Score del usuario en el contexto.
 -- * El número de intentos restantes.
-playDecoderMode :: String -> Set Guess -> Set Score -> Int -> IO ()
-playDecoderMode guess wordSet scoreSet lives = do
+playDecoderMode :: Set Guess -> Set Score -> String ->  Int -> IO ()
+playDecoderMode wordSet scoreSet guess lives = do
     if lives /= 0 then do
         putStrLn $ "Intento " ++ show (7 - lives) ++ ":"
 
@@ -45,13 +45,13 @@ playDecoderMode guess wordSet scoreSet lives = do
                 else do
                     -- Si es error se indica y continúa con los mismo intentos
                     putStrLn $ "Error: " ++ error ++ "\n"
-                    playDecoderMode guess wordSet scoreSet lives
+                    playDecoderMode wordSet scoreSet guess lives
             else do
                 -- Si es válida, pasa al siguiente intento
                 let Right (nextGuess, wordSet', scoreSet') = eval
 
                 putStr "\n"
-                playDecoderMode nextGuess wordSet' scoreSet' (lives - 1)
+                playDecoderMode wordSet' scoreSet' nextGuess (lives - 1)
     else do
         -- Si el jugador no tiene más intentos, revela la palabra
         putStrLn "\n¡Ganaste! :("
