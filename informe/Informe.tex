@@ -12,6 +12,7 @@
 \usepackage{subfigure}          % subfiguras
 \usepackage{float}              % Podemos usar el especificador [H] en las figuras para que se queden donde queramos
 \usepackage{capt-of}            % Permite usar etiquetas fuera de elementos flotantes (etiquetas de figuras)
+\usepackage[outputdir=aux]{minted} % Para colocar código
 \usepackage{sidecap}            % Para poner el texto de las imágenes al lado
 \sidecaptionvpos{figure}{c}     % Para que el texto se alinee al centro vertical
 \usepackage{caption}            % Para poder quitar numeracion de figuras
@@ -161,11 +162,68 @@ todos sus caracteres sean alfabéticos y iii) que pertenezca al conjunto de
 palabras, habiéndose llevado a cabo antes de ello una uniformización de la 
 entrada del usuario, convirtiéndola a mayúsculas removiendo los acentos agudos. \\
 
-Por ser sencillo de implementar, se decidió mantener el historial de intentos (la matriz de Toros y Vacas) para compartir el resultado, consistiendo en concatenar cada intento, de ser válido, a la cabeza de una lista de \texttt{String} en cada llamada recursiva, para ser impresa al final en orden inverso.
+Por ser sencillo de implementar, se decidió mantener el historial de intentos 
+(la matriz de Toros y Vacas) para compartir el resultado, consistiendo en 
+concatenar cada intento, de ser válido, a la cabeza de una lista de \texttt
+{String} en cada llamada recursiva, para ser impresa al final en orden inverso.
 
 \subsection{Modo \emph{descifrador}}
 
-En este modo se presentaron más dificultades
+En este modo se presentaron más dificultades, pues principalmente la creación 
+de un árbol a lo sumo 10-ario con 4 niveles de profundidad es un cálculo
+computacionalmente intenso y el planteamiento en programación funcional de la
+construcción del agente Minimax resulta complejo al no estar acostumbrados a
+pensar en este paradigma de resolución de problemas, sin embargo, al lograr
+conseguir la solución se puede notar por qué es este un problema adecuado para
+resolverse en un lenguaje de programación declarativo con más facilidad que en uno imperativo. \\
+
+Para el modelado del problema se usaron las siguientes extructuras de Datos:
+
+\begin{minted}{haskell}
+data Guess = Guess String Int
+data Score = Score String Int
+data Rose a = Leaf a | Node a [Rose a]
+data MinimaxNode = MinimaxNode {
+    value    :: String,
+    wordSet  :: Set Guess,
+    scoreSet :: Set Score,
+    score    :: Int
+} 
+\end{minted}
+
+Al tener que generar un árbol con cantidad no acotada y probablemente variable
+de nodos hijo, se decidió implementar la estructura de datos \texttt{Rose}. Por
+otro lado, se modelan las Strings de adivinación y calificación del usuario con
+los registros \texttt{Guess} y \texttt{Score}, respectivamente, cada uno de los
+cuales contiene una String y su calificación, de acuerdo a la dada en el enunciado. \\
+
+De tal manera, se diseñaron funciones que dada una String crean el
+\texttt{Score} o la \texttt{Guess} con su puntuación correspondiente. Como la
+creación del árbol es costosa, se decidió usar un \texttt{Int} para representar las 
+puntuaciones con más precisión y hacer cálculos con mayor rapidez, siendo estas el
+resultado de multiplicar por 10 la puntuación del enunciado. Además, en el caso del
+cálculo de los \texttt{Score}, para evitar que cada String valga 10 y se reste 2 o 1
+por cada Toro o Vaca, se cambió el esquema de puntuación a uno análogo que no usa
+resta, sino que suma 0 por cada Toro, 1 por cada Vaca y 2 por cada guión, siendo
+las puntuaciones resultantes equivalentes. \\
+
+Luego, se guarda el estado del juego en cada ronda en dos conjuntos, un
+\texttt{Set Guess} y un \texttt{Set Score}, que contienen estos las palabras que
+sirven de posible adivinación y posible calificación del usuario en la ronda actual,
+respectivamente. Así, se aprovecha la implementación de Haskell de \texttt{Set} como
+un árbol binario de búsqueda para implementar la typeclass \texttt{Ord} en \texttt{Guess} y \texttt{Score}, de forma que al crear cada conjunto se tengan las
+adivinaciones posibles en orden ascendente de puntuación, y las puntuaciones posibles
+del usuario en orden descendente de puntuación, que servirá posteriormente para
+simplificar la construcción del árbol Minimax. \\
+
+Estos conjuntos se crean y calculan una sola vez durante todo el programa. En el caso
+del \texttt{Set Guess} se pasan todas las palabras del \texttt{Set String}, cargadas en
+\texttt{Main} a \texttt{Guess}, y se usa la comprensión de listas de Haskell para
+obtener todas las combinaciones posibles de 5 letras de \texttt{`-'}, \texttt{`V'} y
+\texttt{`T'}. \\
+
+Por otro lado, se diseñaron distintos algoritmos para aprovechar al máximo las pistas
+del usuario
 
 \section{Conclusiones}
 
@@ -225,14 +283,5 @@ experimentales obtenidos permiten concluir que:
    otras estructuras matemáticas o de datos.
 
 \end{itemize}
-
-\section{Referencias}
-
-\begin{enumerate}
-   \item David Avis. A survey of heuristics for the weighted matching problem. Networks,
-   13(4):475–493, 1983.
-   \item Wen Lea Pearn and TC Wu. Algorithms for the rural postman problem. Computers \& Operations Research, 22(8):819–828, 1995.
-\end{enumerate}
-
 
 \end{document}
