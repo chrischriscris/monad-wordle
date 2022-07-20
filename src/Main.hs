@@ -31,4 +31,4 @@ main = do
             then do
                 playMastermindMode words randomWord 6 []
             else do
-                playDecoderMode (initWordSet words) initScoreSet "BUCES" 6
+                playDecoderMode (initWordSet words) initScoreSet randomWord 6
