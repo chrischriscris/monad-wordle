@@ -260,7 +260,7 @@ generateMaxLevel node level =
 
     in
         -- Mapea cada nodo de la lista a un Rose hoja si ya hay 4 niveles de profundidad
-        if level + 1 == 4 then map Leaf nodeList
+        if level == 4 then map Leaf nodeList
 
         -- De otra forna, mapea cada nodo de la lista a un Rose rama
         else map (\n -> let nextLevel = generateMinLevel n (level+1) in
@@ -353,7 +353,7 @@ guessNext guess score guessSet scoreSet =
 
         -- Genera el nodo padre del árbol y el árbol minimax a partir de él
         parentNode = MinimaxNode score guessSet' scoreSet' 0
-        minimaxTree = Node parentNode $ generateMinLevel parentNode 0
+        minimaxTree = Node parentNode $ generateMinLevel parentNode 1
 
         -- Interpreta el árbol minimax y obtiene la adivinación
         nextGuess = interpret minimaxTree
