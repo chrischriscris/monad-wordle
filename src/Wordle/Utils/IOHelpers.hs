@@ -5,7 +5,6 @@ Descripción : Funciones de ayuda de IO para implementación de Wordle.
 Copyright   : (c) Christopher Gómez, 2022
 Licencia    : GPL-3
 -}
-
 module Wordle.Utils.IOHelpers where
 
 import System.IO
