@@ -200,8 +200,7 @@ data MinimaxNode = MinimaxNode {
     value    :: String,    -- ^ Valor del nodo (una palabra o una puntuación).
     wordSet  :: Set Guess, -- ^ Conjunto de Guess válidos al momento.
     scoreSet :: Set Score, -- ^ Conjunto de Scores válidos al momento.
-    score    :: Int,       -- ^ Puntuación minimax del nodo.
-    depth    :: Int        -- ^ Profundidad del nodo en el árbol.
+    score    :: Int        -- ^ Puntuación minimax del nodo.
 } deriving (Show, Eq)
 
 -- Nodos se ordenan según su puntuación
@@ -216,35 +215,37 @@ getNodeVal (Node val _) = val
 -- $doc
 -- == Generación e interpretación del árbol Minimax
 
--- | Genera un nivel de minimización de árbol de Minimax, dado un nodo padre.
+-- | Genera un nivel de minimización de árbol de Minimax, dado un nodo padre
+-- y el nivel de profundidad.
 -- 
 -- Un nivel de minimización es una lista de nodos hijo, donde cada nodo
 -- contiene las 10 palabras con menor puntuación que se pueden adivinar
 -- dada la información del padre.
-generateMinLevel :: MinimaxNode -> [Rose MinimaxNode]
-generateMinLevel node =
+generateMinLevel :: MinimaxNode -> Int -> [Rose MinimaxNode]
+generateMinLevel node level =
     -- Extrae la información del padre
-    let (MinimaxNode _ wSet sSet sc level) = node
+    let (MinimaxNode _ wSet sSet sc) = node
         -- Toma las 10 palabras con menor puntuación
         words = Set.toList $ Set.take 10 wSet
 
         -- Genera con esas palabras lista de MinimaxNode
         nodeList = map
-            (\(Guess w sc) -> MinimaxNode w wSet sSet sc (level+1)) words
+            (\(Guess w sc) -> MinimaxNode w wSet sSet sc) words
 
     -- Mapea cada nodo de la lista a un Rose rama
-    in map (\n -> let nextLevel = generateMaxLevel n in
+    in map (\n -> let nextLevel = generateMaxLevel n (level+1) in
         if null nextLevel then Leaf n else Node n nextLevel) nodeList
 
--- | Genera un nivel de maximización de árbol de Minimax, dado un nodo padre.
+-- | Genera un nivel de maximización de árbol de Minimax, dado un nodo padre
+-- y el nivel de profundidad.
 -- 
 -- Un nivel de maximización es una lista de nodos hijo, donde cada nodo
 -- contiene las 10 strings de score con mayor puntuación que son posibles
 -- respuestas del usuario, dada la información del padre.
-generateMaxLevel :: MinimaxNode -> [Rose MinimaxNode]
-generateMaxLevel node =
+generateMaxLevel :: MinimaxNode -> Int -> [Rose MinimaxNode]
+generateMaxLevel node level =
     -- Extrae la información del padre
-    let (MinimaxNode val wSet sSet _ level) = node
+    let (MinimaxNode val wSet sSet _) = node
         -- Toma los 10 Scores válidos con menor puntuación
         scores = Set.take 10 $ Set.filter (isValidScore val wSet) sSet
 
@@ -254,8 +255,7 @@ generateMaxLevel node =
                 str
                 (filterGuessSet wSet val str)
                 (filterScoreSet sSet str)
-                sc
-                (level+1))
+                sc)
             (Set.toList scores)
 
     in
@@ -263,7 +263,7 @@ generateMaxLevel node =
         if level + 1 == 4 then map Leaf nodeList
 
         -- De otra forna, mapea cada nodo de la lista a un Rose rama
-        else map (\n -> let nextLevel = generateMinLevel n in
+        else map (\n -> let nextLevel = generateMinLevel n (level+1) in
             if null nextLevel then Leaf n else Node n nextLevel) nodeList
 
 -- | Interpreta un árbol minimax dado.
@@ -316,10 +316,10 @@ scoreNode tree@(Node val childs) =
         childs' = map f childs
 
         -- Extrae información del nodo viejo
-        (MinimaxNode v wS sS sc d) = val
+        (MinimaxNode v wS sS sc) = val
 
         -- Incrementa al nodo las puntuaciones de sus hijos
-        val' = MinimaxNode v wS sS (sc + sum (map (score . getNodeVal) childs')) d
+        val' = MinimaxNode v wS sS $ sc + sum (map (score . getNodeVal) childs')
     in Node val' childs'
 
 -- $doc
@@ -352,8 +352,8 @@ guessNext guess score guessSet scoreSet =
         guessSet' = filterGuessSet guessSet guess score
 
         -- Genera el nodo padre del árbol y el árbol minimax a partir de él
-        parentNode = MinimaxNode score guessSet' scoreSet' 0 0
-        minimaxTree = Node parentNode $ generateMinLevel parentNode
+        parentNode = MinimaxNode score guessSet' scoreSet' 0
+        minimaxTree = Node parentNode $ generateMinLevel parentNode 0
 
         -- Interpreta el árbol minimax y obtiene la adivinación
         nextGuess = interpret minimaxTree
