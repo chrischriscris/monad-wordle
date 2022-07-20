@@ -223,7 +223,65 @@ obtener todas las combinaciones posibles de 5 letras de \texttt{`-'}, \texttt{`V
 \texttt{`T'}. \\
 
 Por otro lado, se diseñaron distintos algoritmos para aprovechar al máximo las pistas
-del usuario
+que da el jugador y filtrar lo más posible el conjunto de adivinaciones y puntuaciones.
+Estos algoritmos generan filtros que se dividen en filtros de posición, que filtran
+palabras con respecto a si tienen o no un caracter en una posición específica, y filtros
+frecuenciales, que filtran palabras por la cantidad de veces que contienen cierto
+caracter. A continuación se explica cómo se generan los filtros en cada caso: \\
+
+\begin{itemize}
+   \item Para el conjunto de \texttt{Guess}:
+   \begin{itemize}
+      \item \textbf{Filtros posicionales}:
+      \begin{itemize}
+         \item Se filtran las palabras con el mismo caracter en las posiciones que el
+         jugador indicó como Toro.
+         \item Se filtran las palabras que no contengan el caracter en la misma posición
+         que el usuario indicó como Vaca.
+      \end{itemize}
+      \item \textbf{Filtros frecuenciales}:
+      \begin{itemize}
+         \item Se filtran las palabras que contengan al menos $n$ apariciones de cierto
+         caracter en la misma posición que el usuario indicó Vaca, donde $n$ es el
+         número de veces que este caracter aparece asociado con una Vaca, aprovechando
+         así las pistas que puedan indicar repetición de caracteres en la palabra.
+         \item Se filtran las palabras que contengan 0 apariciones de cierto caracter si este solamente aparece asociado a guiones y no vacas.
+      \end{itemize}
+   \end{itemize}
+   \item Para el conjunto de \texttt{Score}:
+   \begin{itemize}
+      \item \textbf{Filtros posicionales}:
+      \begin{itemize}
+         \item Se filtran las puntuaciones que tengan Toros exactamente en las mismas
+         posiciones, pues no es posible que al detectarse un Toro la próxima adivinación
+         sea una palabra que no contenga el mismo Toro.
+      \end{itemize}
+      \item \textbf{Filtros frecuenciales}:
+      \begin{itemize}
+         \item Se filtran las palabras que contengan al menos la misma cantidad de Toros y Vacas, pues una vez obtenido un Toro este no desaparecerá en las
+         próximas adivinaciones, y las Vacas seguirán siendo Vacas o se convertirán
+         en Toros.
+      \end{itemize}
+   \end{itemize}
+\end{itemize}
+
+Con estos filtros, desde la segunda adivinación los cómputos se aligeran
+considerablemte, ya que estos reducen en gran manera el conjunto de posibilidades
+y, por ende, los cálculos necesarios al construir el árbol. \\
+
+En prosecución, el registro \texttt{MinimaxNode} se encarga de guardar el estado de
+cada adivinación/nodo del árbol, y al momento del diseño se deliberó que estos
+debían contener solamente información estrictamente necesaria para generar
+un nuevo nivel del árbol de la forma más eficiente posible. Por ello, se guardan
+en estos un valor, que bien puede ser una String de calificación del usuario en
+nodos de profundidad par, o una palabra de adivinación, en nodos de profundidad
+impar; los conjuntos de palabras y puntuaciones posibles dado el valor y el estado
+del juego, de forma que estos no se vuelvan a calcular mientras se construye el
+árbol; y la puntuación del nodo, que inicialmente contiene la misma puntuación de
+\texttt{value}. \\
+
+Dadas estas estructuras de datos, las herramientas que nos ofrece Haskell y las
+librerías
 
 \section{Conclusiones}
 
