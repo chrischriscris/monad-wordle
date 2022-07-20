@@ -44,7 +44,6 @@ instance Ord Score where
 scoreString :: Score -> String
 scoreString (Score string _) = string
 
-
 -- $doc
 -- == Funciones para manejar tipos de datos
 

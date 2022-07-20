@@ -44,7 +44,7 @@ playMastermindMode words answer lives history = do
 
             if score == "TTTTT" then do
                 -- Si el jugador ha acertado, imprime la palabra y termina
-                putStrLn "\n¡Ganaste!\n"
+                putStrLn "\n¡Ganaste! :)\n"
                 printHistory (score:history)
             else do
                 putStr "\n"
