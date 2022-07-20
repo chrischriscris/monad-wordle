@@ -233,7 +233,8 @@ generateMinLevel node =
             (\(Guess w sc) -> MinimaxNode w wSet sSet sc (level+1)) words
 
     -- Mapea cada nodo de la lista a un Rose rama
-    in map (\n -> Node n $ generateMaxLevel n) nodeList
+    in map (\n -> let nextLevel = generateMaxLevel n in
+        if null nextLevel then Leaf n else Node n nextLevel) nodeList
 
 -- | Genera un nivel de maximización de árbol de Minimax, dado un nodo padre.
 -- 
@@ -262,7 +263,8 @@ generateMaxLevel node =
         if level + 1 == 4 then map Leaf nodeList
 
         -- De otra forna, mapea cada nodo de la lista a un Rose rama
-        else map (\n -> Node n $ generateMinLevel n) nodeList
+        else map (\n -> let nextLevel = generateMinLevel n in
+            if null nextLevel then Leaf n else Node n nextLevel) nodeList
 
 -- | Interpreta un árbol minimax dado.
 --
