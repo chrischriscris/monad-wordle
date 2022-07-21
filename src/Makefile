@@ -1,7 +1,7 @@
 all: 
 	ghc --make -o wordle Main.hs
 
-docs:
+docs: docs
 	haddock --html -o docs **.hs
 
 clean:
