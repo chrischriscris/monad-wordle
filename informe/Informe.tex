@@ -266,7 +266,7 @@ caracter. A continuación se explica cómo se generan los filtros en cada caso: 
 \end{itemize}
 
 Con estos filtros, desde la segunda adivinación los cómputos se aligeran
-considerablemte, ya que estos reducen en gran manera el conjunto de posibilidades
+considerablemente, ya que estos reducen en gran manera el conjunto de posibilidades
 y, por ende, los cálculos necesarios al construir el árbol. \\
 
 En prosecución, el registro \texttt{MinimaxNode} se encarga de guardar el estado de
@@ -352,67 +352,40 @@ de los intentos el algoritmo explorará cada palabra restante como opción en or
 a la del usuario. Una solución a esto, que sin embargo no se podría implementar en
 el estilo funcionalmente puro de Haskell, es escoger una palabra al azar de las
 restantes para aumentar la probabilidad de ganar, en vez de recorrer la secuencia
-siempre en el mismo orden y no llegar a la palabra del usuario.
+siempre en el mismo orden y no llegar a la palabra del usuario. \\
+
+Finalmente, se intentó disminuyendo la profundidad del árbol a 2 niveles y la
+calidad de las adivinaciones bajó considerablemente, y a su vez se intentó
+aumentarla a 6 niveles y la calidad de las adivinaciones era comparable a
+los 4 niveles, ambos casos sin diferencias notables en la eficiencia (obtener una
+próxima adivinación no tardaba mucho más ni mucho menos). Por lo que tener
+4 niveles de profundidad parecía ser ideal.
 
 \section{Conclusiones}
 
-(No se ha hecho) \\ 
-
-El algoritmo presentado para resolver el \emph{problema del cartero rural} (RPP),
-su implementación en \texttt{grafoLib} y los resultados 
-experimentales obtenidos permiten concluir que:
+La implementación de \texttt{monad-wordle}, el proceso de planteamiento y
+diseño de los problemas, y el resultado obtenido permite concluir que:
 
 \begin{itemize}
-   \item Sin tomar el elevado tiempo exponencial característico de
-   los algoritmos de fuerza bruta que solucionan los problemas
-   \emph{NP-complejo}, un algoritmo heurístico puede ayudar a obtener
-   soluciones no tan alejadas de las óptimas, las cuales puede ser
-   útiles en ciertas aplicaciones, y requerir un tiempo muchísimo
-   menor.
-
-   \item Los algoritmos sobre grafos vistos en el curso sirven
-   para resolver variedades de problemas, tanto computacionales
-   como en otras áreas. En este caso, fueron de utilidad algoritmos
-   para obtener árboles mínimos cobertores, apareamientos perfectos,
-   componentes conexas y caminos de costo mínimo (juntos con sus
-   costos).
-
-   \item Aunque para resolver esta implementación se necesitó de 
-   un isomorfismo entre dos grafos con vértices representados con 
-   números naturales, se observó que los grafos isomorfos son de
-   gran utilidad para mapear grafos de cualquier tipo a grafos de
-   números naturales en un intervalo, de forma que se mantiene una
-   implementación sencilla a la vez que se pueden resolver problemas
-   que requieran grafos con vértices de otro tipo (como cadenas de
-   caracteres e incluso objetos). Además, es útil y eficiente para
-   la implementación de la función $f$ del isomorfismo el uso de arreglos
-   y diccionarios como tablas de hash, que toman tiempo lineal en su
-   creación pero luego tiempo amortizado constante en su acceso.
-
-   \item Si bien se sabe que una estrategia ávida no necesariamente
-   obtiene la mejor solución a los problemas, son en su mayoría
-   sencillas de implementar y pueden usarse para resolver partes
-   de problemas más grandes proporcionando soluciones razonablemente
-   cercanas a la óptima.
-
-   \item Las ideas y algoritmos sobre grafos dirigidos pueden, en
-   muchos casos, extenderse a grafos no dirigidos, teniendo cuenta
-   de la ``orientación'' de las aristas y considerando que siempre se 
-   tiene que los lados $(u, v)$ y $(v, u)$ son iguales.
-
-   \item Cuando se dispone de suficiente tiempo y recursos, puede
-   resultar beneficioso implementar y ejecutar varias veces un
-   algoritmo que explora el espacio de soluciones para obtener
-   soluciones mejores que la de los algoritmos deterministas, 
-   especialmente si el tiempo de ejecución del algoritmo no
-   determinista es similar o mejor que el determinista.
-
-   \item Modelar problemas con grafos proporciona en la mayoría de
-   los casos poderosas herramientas para resolver desde problemas
-   cotidianos a complejos, de forma argumentablemente más sencilla
-   a si se buscase resolver los mismos problemas con el uso de 
-   otras estructuras matemáticas o de datos.
-
+   \item El paradigma de progración funcional proporciona una forma
+   completamente distinta y en ciertos casos más conveniente de resolver
+   problemas, en especial aquellos que involucran fuertemente recursión.
+   \item Al programar soluciones a problemas computacionalmente costosos,
+   es conveniente hallar la forma de no repetir los cálculos que se pueden
+   reutilizar guardándolos en estructuras de datos.
+   \item Es importante tener claramente separadas, distribuidas y bien delimitadas
+   las funciones y la responsabilidades de cada módulo, con el fin de producir código
+   legible, ordenado y mantenible.
+   \item A pesar de la carencia de mutabilidad, Haskell resulta una herramienta
+   muy poderosa y eficiente para ser usada en variedad de problemas, además de
+   muy robusta por su manejo de tipos y pureza funcional.
+   \item Es necesario internalizar los conceptos y documentarse bien al respecto
+   de las funcionalidades que ofrecen las librerías a usar, ya que gran parte de
+   las veces lo que se busca hacer ya está implementado en una de ellas.
+   \item Al resolver problemas que involucran búsqueda y manipulación de vólumenes grandes de
+   datos, es conveniente usar alguna implementación de conjunto, que dará resultados
+   notablemente mejores en la mayoría de los casos, siempre y cuando se pueda establecer
+   un orden entre los datos.
 \end{itemize}
 
 \end{document}
