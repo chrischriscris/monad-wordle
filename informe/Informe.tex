@@ -281,9 +281,82 @@ del juego, de forma que estos no se vuelvan a calcular mientras se construye el
 \texttt{value}. \\
 
 Dadas estas estructuras de datos, las herramientas que nos ofrece Haskell y las
-librerías
+librerías permiten implementar la construcción el árbol Minimax con un algoritmo 
+simple de recursión mutua que aprovecha el estilo declarativo y funcional del
+lenguaje, descrito a continuación en alto nivel:
+
+\begin{itemize}
+   \item Para generar un nivel de minimización (dado un \texttt{MinimaxNode} padre con una puntuación):
+   \begin{itemize}
+      \item Se toman 10 palabras del conjunto que guarda el nodo (\texttt{take 10}) - Nótese que no se ordenan porque el conjunto ya las contiene ordenadas en orden ascendente de puntuación.
+      \item Se construye un nodo para cada una de estas palabras (\texttt{map}).
+      \item A partir de cada nodo como padre, se genera un nivel de maximización (\texttt{map}).
+      \item Si el nuevo nivel es generado no tiene elementos, el nodo es una hoja, de otra forma, es una rama.
+   \end{itemize}
+\end{itemize}
+
+\pagebreak
+
+\begin{itemize}
+   \item Para generar un nivel de maximización (dado un \texttt{MinimaxNode} padre con una adivinación):
+   \begin{itemize}
+      \item Se toman 10 puntuaciones del conjunto que guarda el nodo (\texttt{take 10}) - Análogamente, no se ordenan porque el conjunto ya las contiene ordenadas en orden descendente de puntuación. Para tomar 10 \texttt{Score} que sean válidos, se toman solamente si al filtrar el conjunto del propio nodo con el \texttt{Score} es no vacío. Gracias al modo de evaluación de Haskell esto resulta sumamente eficiente.
+      \item Se construye un nodo para cada una de estas puntuaciones (\texttt{map}), los conjuntos que guarda cada nodo son los filtrados dada la palabra del nodo padre y el \texttt{Score} de la lista (\texttt{filter}).
+      \item A partir de cada nodo, se genera un nivel de minimización (\texttt{map}).
+      \item Si el nuevo nivel es generado no tiene elementos, el nodo es una hoja, de otra forma, es una rama. A su vez, no genera un siguiente nivel si la profundidad ya es 4, deteniendo la recursión mutua.
+   \end{itemize}
+\end{itemize}
+
+Una vez generado el árbol y puntuado se recorre este de nuevo para incrementar a
+cada nodo la suma de las puntuaciones de sus hijos y tomar el nodo de primer nivel
+con menor valor como próxima adivinación, terminando el algoritmo. \\
+
+La detección de tramposos en el marco de todas las funciones que se
+tienen consiste simplemente en ver si el conjunto resultante al filtrarse este
+de acuerdo a la pista del jugador es vacío, en cuyo caso se descarta cualquier
+posibilidad incluso antes de comenzar a generar el árbol.
+
+\section{Consideraciones de la implementación y ejecución}
+
+Al ejecutar el programa final, el modo \emph{mentemaestra} no sufre de ninguna ineficiencia,
+y tras numerosas pruebas muestra total precisión en las pistas mostradas al usuario,
+así como en la matriz de Vacas y Toros y el manejo de intentos restantes. \\
+
+Por otra parte, para el modo \emph{decodificador}, el algoritmo resulta más eficiente de lo
+esperado, aunque en ciertas ejecuciones la construcción del árbol para hallar la segunda
+adivinación puede tardar entre 2 y 8 segundos\footnote{Pruebas hechas en Debian 11 Bullseye 64-bit,
+en un procesador Intel(R) Core i3-2120 @ 3.30GHz, con el programa compilado en GHC version 8.8.4},
+pero esto se debe a que es en el primer intento donde se construye el árbol más grande. Quizás la
+optimización más importante es tener el conjunto de adivinaciones precalculado y las palabras
+puntuadas una sola vez al comienzo del programa, y que las sucesivas adivinaciones obtienen
+estos conjuntos cada vez más pequeños, por lo que por lo general, para la tercera adivinación
+el tiempo de respuesta es por lo general menor a 2 segundos, y las posteriores adivinaciones
+se generan virtualmente de forma instantánea. \\
+
+Luego, se decidió que la primera adivinación del modo \emph{decodificador} sería una palabra
+escogida al azar, para que siempre hayan posibilidades de adivinar la palabra del jugador
+desde otra palabra inicial; si se comenzara siempre con la misma palabra, por
+la naturaleza del algoritmo (y la implementación funcionalmente de Haskell\footnote{La
+misma entrada produce siempre la misma salida}), existirán palabras imposibles de
+adivinar, y la forma de cambiar esto es comenzar siempre desde una palabra
+distinta escogida al azar. \\
+
+Para muchas palabras el solucionador implementado resulta infalible y adivina
+correctamente la palabra en alrededor de 4 intentos en promedio, sin embargo,
+tiene dificultad para adivinar conjuntos de palabras iguales excepto por una letra,
+en cuyo caso el solucionador llega a los 6 intentos sin hallar una solución si
+el usuario pensaba en una de las palabras menor puntuada de ellas. Un ejemplo de este caso
+es \texttt{RUPIA}, que coincide con \texttt{RUBIA}, \texttt{RUCIA}, \texttt{RUBIA},
+\texttt{RUGIA}, \texttt{RUJIA}, \texttt{RUSIA} y \texttt{RUMIA}, donde la mayoría
+de los intentos el algoritmo explorará cada palabra restante como opción en orden sin llegar
+a la del usuario. Una solución a esto, que sin embargo no se podría implementar en
+el estilo funcionalmente puro de Haskell, es escoger una palabra al azar de las
+restantes para aumentar la probabilidad de ganar, en vez de recorrer la secuencia
+siempre en el mismo orden y no llegar a la palabra del usuario.
 
 \section{Conclusiones}
+
+(No se ha hecho) \\ 
 
 El algoritmo presentado para resolver el \emph{problema del cartero rural} (RPP),
 su implementación en \texttt{grafoLib} y los resultados 
