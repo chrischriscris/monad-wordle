@@ -19,9 +19,9 @@ import Wordle.Utils.Minimaxer
 --
 -- * El intento de adivinación actual.
 -- * El conjunto de posibles adivinaciones en el contexto.
--- * El conjunto de posibles strings de Score del usuario en el contexto.
+-- * El conjunto de posibles strings de Hint del usuario en el contexto.
 -- * El número de intentos restantes.
-playDecoderMode :: Set Guess -> Set Score -> String ->  Int -> IO ()
+playDecoderMode :: Set Guess -> Set Hint -> String ->  Int -> IO ()
 playDecoderMode wordSet scoreSet guess lives = do
     if lives /= 0 then do
         putStrLn $ "Intento " ++ show (7 - lives) ++ ":"
@@ -64,7 +64,7 @@ initWordSet :: Set String -> Set Guess
 initWordSet = Set.map guessFromString
 
 -- | Conjunto con todas las combinaciones de Scores posibles.
-initScoreSet :: Set Score
+initScoreSet :: Set Hint
 initScoreSet = fromList [ scoreFromString str | str <- scoreStrings ]
     where
         x = "-VT"

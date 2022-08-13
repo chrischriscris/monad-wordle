@@ -30,7 +30,7 @@ import Data.Either ( isLeft )
 -- * V donde la letra de la adivinación se encuentra en la respuesta pero en
 --   una posición distinta.
 -- * - donde la letra de la adivinación no se encuentra en la respuesta.
-type ScoreString = String
+type HintString = String
 
 type Guess = String
 type Answer = String
@@ -49,7 +49,7 @@ type Answer = String
 -- Ejemplos:
 --
 -- >>> checkGuess "CARAS" "CARPA"
--- Right "TTTV_"
+-- Right "TTTV-"
 -- >>>checkGuess "TIENE" "PEROL"
 -- Right "--V--"
 -- >>> checkGuess "PALTA" "RESTO"
@@ -61,7 +61,7 @@ type Answer = String
 -- >>> checkGuess "SIEMPRE" "NUNCA"
 -- Left "El tamaño de las cadenas no coincide"
 checkGuess :: Guess -> Answer -> Set String
-    -> Either String ScoreString
+    -> Either String HintString
 checkGuess guess answer words
     | isLeft res       = res -- Propaga el error
     | otherwise        =
@@ -83,7 +83,7 @@ checkGuess guess answer words
 -- * Una string con las letras restantes por adivinar.
 -- * La string de calificación parcial con el formato descrito en `checkGuess`
 checkT :: Guess -> Answer
-    -> (ScoreString, String)
+    -> (HintString, String)
 checkT guess answer =
     let temp = zipWith (\x y -> if x == y then "T" else "-" ++ [y]) guess answer
         [resString, remChars] = transpose temp
@@ -93,8 +93,8 @@ checkT guess answer =
 -- chequeado los toros con la función `checkT` previamente.
 -- 
 -- Retorna una string de calificación.
-checkV :: Guess -> (ScoreString, String)
-    -> ScoreString
+checkV :: Guess -> (HintString, String)
+    -> HintString
 checkV "" _ = []
 checkV (h1:r1) (h2:r2, remAns)
     | h2 == 'T'        = 'T' : checkV r1 (r2, remAns)
@@ -125,7 +125,7 @@ validateGuess guess words
     | word `notMember` words    = Left "La palabra no es válida"
     | otherwise                 = Right word
     where
-        word = uniformize guess
+        word = normalize guess
 
 -- | Verifica si una String es alfabética.
 isAlphabetic :: String -> Bool
@@ -136,10 +136,10 @@ isAlphabetic = all isAlpha
 -- 
 -- Ejemplo:
 -- 
--- >>> uniformize "Hola, cómo estás."
+-- >>> normalize "Hola, cómo estás."
 -- "HOLA, COMO ESTAS."
-uniformize :: String -> String
-uniformize = map (removeAccent . toUpper)
+normalize :: String -> String
+normalize = map (removeAccent . toUpper)
     where
         removeAccent 'Á' = 'A'
         removeAccent 'É' = 'E'

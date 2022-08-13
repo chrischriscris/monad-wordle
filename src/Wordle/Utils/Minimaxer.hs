@@ -10,7 +10,7 @@ Licencia    : GPL-3
 {-# OPTIONS_HADDOCK ignore-exports #-}
 
 module Wordle.Utils.Minimaxer ( 
-    Guess, Score,
+    Guess, Hint,
     scoreFromString, guessFromString,
     guessNext
 ) where
@@ -34,15 +34,15 @@ guessString :: Guess -> String
 guessString (Guess word _) = word
 
 -- | Tipo de dato para representar una string de calificación del usuario.
-data Score = Score String Int
+data Hint = Hint String Int
     deriving (Show, Eq)
 
-instance Ord Score where
-    compare (Score w1 s1) (Score w2 s2) = compare (s2, w2) (s1, w1)
+instance Ord Hint where
+    compare (Hint w1 s1) (Hint w2 s2) = compare (s2, w2) (s1, w1)
 
--- | Obtiene la String de un Score.
-scoreString :: Score -> String
-scoreString (Score string _) = string
+-- | Obtiene la String de un Hint.
+scoreString :: Hint -> String
+scoreString (Hint string _) = string
 
 -- $doc
 -- == Funciones para manejar tipos de datos
@@ -62,13 +62,13 @@ guessFromString word = Guess word (sum $ map qualifyChar word)
             | c `elem` "FHVYQ" =  8
             | c `elem` "JZXKW" = 10
 
--- | Retorna un Score dado una string con la calificación del usuario,
+-- | Retorna un Hint dado una string con la calificación del usuario,
 -- puntuada de acuerdo al algoritmo de Minimax.
 --
 -- Usa enteros para salvar la eficiencia que puede perderse al manipular
 -- números de punto flotante.
-scoreFromString :: String -> Score
-scoreFromString string = Score string (sum $ map qualifyChar string)
+scoreFromString :: String -> Hint
+scoreFromString string = Hint string (sum $ map qualifyChar string)
     where qualifyChar 'T'  = 0
           qualifyChar 'V'  = 1
           qualifyChar '-'  = 2
@@ -99,12 +99,12 @@ validateScore score
 count :: (Eq a) => a -> [a] -> Int
 count c = length . filter (==c)
 
--- | Retorna un booleano indicando si un Score es válido dada la string
--- de adivinación, el conjunto de adivinaciones posibles y el Score.
-isValidScore :: String ->  Set Guess -> Score -> Bool
+-- | Retorna un booleano indicando si un Hint es válido dada la string
+-- de adivinación, el conjunto de adivinaciones posibles y el Hint.
+isValidScore :: String ->  Set Guess -> Hint -> Bool
 isValidScore guess guessSet score =
     -- Es válido si el conjunto resultante de filtrar las posibles
-    -- adivinaciones usando ese Score tiene al menos un elemento
+    -- adivinaciones usando ese Hint tiene al menos un elemento
     not $ Set.null (filterGuessSet guessSet guess $ scoreString score)
 
 -- $doc
@@ -121,7 +121,7 @@ filterGuessSet words guess score =
     in Set.filter (\(Guess str _) -> f str) words
 
 
--- | Recibe un Guess y un Score del usuario y retorna una lista de filtros
+-- | Recibe un Guess y un Hint del usuario y retorna una lista de filtros
 -- que servirá para filtrar del conjunto las palabras inválidas
 getFilters :: String -> String -> [String -> Bool]
 getFilters guess score = filters1 ++ filters2
@@ -155,13 +155,13 @@ frequency zipList = toList $
 -- $doc
 -- == Filtrado del conjunto de puntuaciones posibles
 
--- | Filtra el conjunto de Scores posibles tras la Score dada.
+-- | Filtra el conjunto de Scores posibles tras la Hint dada.
 --
 -- Recibe el conjunto inicial y la puntuación del usuario.
-filterScoreSet :: Set Score -> String -> Set Score
+filterScoreSet :: Set Hint -> String -> Set Hint
 filterScoreSet scores str =
     let f = unifyFilters $ freqFilter str : posFilters' str 0  in
-        Set.filter (\(Score sc _) -> f sc) scores
+        Set.filter (\(Hint sc _) -> f sc) scores
 
 -- | Función auxiliar que genera filtros posicionales.
 posFilters' :: String -> Int -> [String -> Bool]
@@ -199,7 +199,7 @@ data Rose a = Leaf a | Node a [Rose a]
 data MinimaxNode = MinimaxNode {
     value    :: String,    -- ^ Valor del nodo (una palabra o una puntuación).
     wordSet  :: Set Guess, -- ^ Conjunto de Guess válidos al momento.
-    scoreSet :: Set Score, -- ^ Conjunto de Scores válidos al momento.
+    scoreSet :: Set Hint, -- ^ Conjunto de Scores válidos al momento.
     score    :: Int        -- ^ Puntuación minimax del nodo.
 } deriving (Show, Eq)
 
@@ -251,7 +251,7 @@ generateMaxLevel node level =
 
         -- Genera con esos Scores lista de MinimaxNode
         nodeList = map
-            (\(Score str sc) -> MinimaxNode
+            (\(Hint str sc) -> MinimaxNode
                 str
                 (filterGuessSet wSet val str)
                 (filterScoreSet sSet str)
@@ -339,10 +339,10 @@ scoreNode tree@(Node val childs) =
 --   adivinación generada y los conjuntos de guess y score filtrados para
 --   una siguiente ronda.
 guessNext :: String    -- ^ Palabra adivinada
-          -> String    -- ^ Score del usuario
+          -> String    -- ^ Hint del usuario
           -> Set Guess -- ^ Conjunto de palabras restantes
-          -> Set Score -- ^ Conjunto de scores restantes
-          -> Either String (String, Set Guess, Set Score) -- ^ Contexto de la siguiente adivinación
+          -> Set Hint -- ^ Conjunto de scores restantes
+          -> Either String (String, Set Guess, Set Hint) -- ^ Contexto de la siguiente adivinación
 guessNext guess score guessSet scoreSet =
     -- Verifica la string de score del usuario
     let verifScore = validateScore score
