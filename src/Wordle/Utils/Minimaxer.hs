@@ -199,7 +199,7 @@ data Rose a = Leaf a | Node a [Rose a]
 data MinimaxNode = MinimaxNode {
     value    :: String,    -- ^ Valor del nodo (una palabra o una puntuación).
     wordSet  :: Set Guess, -- ^ Conjunto de Guess válidos al momento.
-    scoreSet :: Set Hint, -- ^ Conjunto de Scores válidos al momento.
+    scoreSet :: Set Hint,  -- ^ Conjunto de Scores válidos al momento.
     score    :: Int        -- ^ Puntuación minimax del nodo.
 } deriving (Show, Eq)
 
